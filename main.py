@@ -79,7 +79,6 @@ def parse_args():
     )
     parser.add_argument(
         "--num-trials",
-        "--num-trails",
         dest="num_trials",
         type=int,
         default=1,

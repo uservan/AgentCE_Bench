@@ -16,3 +16,8 @@ task:
   domain: "tau2"
   initial_state: {}
   tools: []
+
+
+# 1. task的描述都可以在数据中找到
+# 2. tool的描述和定义没有， 如何识别和调用tool？
+# 3. 评估方式，确定代码（我么统一采用action方式）
