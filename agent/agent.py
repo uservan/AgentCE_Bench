@@ -28,7 +28,7 @@ class AssistantMessage:
         self.raw_messages = raw_messages or []
 
     def set_score(self, score: Any):
-        self.score = score
+        self.usage["score"] = score
 
 
 class Agent:
