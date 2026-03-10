@@ -133,12 +133,6 @@ class Agent:
                 tool_name = tool_call.function.name
                 tool_args = json.loads(tool_call.function.arguments or "{}")
                 tool_result = task.call_tool(tool_name, tool_args, used_write_tools, tool_failure_rate=tool_failure_rate)
-                # tool_result = self._call_task_tool(
-                #     task,
-                #     tool_name,
-                #     tool_args,
-                #     tool_failure_rate,
-                # )
                 litellm_messages.append(
                     {
                         "role": "tool",
@@ -153,9 +147,7 @@ class Agent:
         return AssistantMessage(
             content=litellm_messages,
             usage=total_usage,
-            elapsed_time=elapsed_time,
             raw_messages=raw_messages,
-            cost=total_usage,
         )
 
     def _build_messages(
