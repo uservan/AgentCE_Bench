@@ -68,7 +68,7 @@ class CacheEnv:
                             scored_count += 1
 
         output = {
-            "dataset": getattr(dataset, "name", str(dataset)),
+            "dataset": dataset.name,
             "base_task_count": len(dataset),
             "together_tasks": self.together_tasks,
             "tool_failure_rates": self.tool_failure_rates,
