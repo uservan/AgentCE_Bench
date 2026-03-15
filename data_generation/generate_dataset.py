@@ -5,7 +5,7 @@ import random
 from itertools import product
 
 try:
-    from .config import (
+    from . import (
         DEFAULT_CANDIDATES_PER_SLOT,
         DEFAULT_COLS,
         DEFAULT_MAX_RETRIES,
@@ -22,9 +22,10 @@ try:
     )
     from .domains import DOMAIN_BUILDERS, DOMAIN_SPECS, SUPPORTED_DOMAINS
     from .items import generate_item_pool, generate_truth_solution
-    from .validation import validate_dataset, validate_dataset_file, validate_payload
+    from .task_instruction import build_task_instruction_from_instance
+    from .validation import validate_dataset
 except ImportError:
-    from config import (
+    from __init__ import (
         DEFAULT_CANDIDATES_PER_SLOT,
         DEFAULT_COLS,
         DEFAULT_MAX_RETRIES,
@@ -41,7 +42,8 @@ except ImportError:
     )
     from domains import DOMAIN_BUILDERS, DOMAIN_SPECS, SUPPORTED_DOMAINS
     from items import generate_item_pool, generate_truth_solution
-    from validation import validate_dataset, validate_dataset_file, validate_payload
+    from task_instruction import build_task_instruction_from_instance
+    from validation import validate_dataset
 
 
 def row_items(truth_solution, item_lookup, row_index):
@@ -56,15 +58,102 @@ def global_items(truth_solution, item_lookup):
     return [item_lookup[item_id] for row in truth_solution for item_id in row]
 
 
+def rule_attr_key(rule):
+    if "attr" in rule:
+        return rule["attr"]
+    if "predicate_key" in rule:
+        return rule["predicate_key"]
+    return rule["name"]
+
+
+def active_rules(rule_specs, constraint):
+    return [rule for rule in rule_specs if rule["name"] in constraint]
+
+
+def ordered_attr_keys(rule_specs):
+    keys = []
+    seen = set()
+    for rule in rule_specs:
+        key = rule_attr_key(rule)
+        if key in seen:
+            continue
+        seen.add(key)
+        keys.append(key)
+    return keys
+
+
+def pick_rule_for_attr(rule_specs, attr_key):
+    for rule in rule_specs:
+        if rule_attr_key(rule) == attr_key:
+            return rule
+    return None
+
+
+def select_constraint_rule_sets(spec):
+    row_rules = spec["row_rules"]
+    col_rules = spec["col_rules"]
+    global_rules = spec["global_rules"]
+
+    global_attrs = ordered_attr_keys(global_rules)[: min(4, len(ordered_attr_keys(global_rules)))]
+    row_attrs = ordered_attr_keys(row_rules)
+    col_attrs = ordered_attr_keys(col_rules)
+
+    row_shared = [attr for attr in global_attrs if attr in row_attrs][:2]
+    col_shared = [attr for attr in global_attrs if attr in col_attrs][:2]
+
+    row_extra = next((attr for attr in row_attrs if attr not in global_attrs), None)
+    col_extra = next(
+        (attr for attr in col_attrs if attr not in global_attrs and attr != row_extra),
+        None,
+    )
+    if col_extra is None:
+        col_extra = next((attr for attr in col_attrs if attr not in global_attrs), None)
+
+    selected_row_attrs = []
+    for attr in row_shared:
+        if attr not in selected_row_attrs:
+            selected_row_attrs.append(attr)
+    if row_extra is not None and row_extra not in selected_row_attrs:
+        selected_row_attrs.append(row_extra)
+    for attr in row_attrs:
+        if len(selected_row_attrs) >= min(3, len(row_attrs)):
+            break
+        if attr not in selected_row_attrs:
+            selected_row_attrs.append(attr)
+
+    selected_col_attrs = []
+    for attr in col_shared:
+        if attr not in selected_col_attrs:
+            selected_col_attrs.append(attr)
+    if col_extra is not None and col_extra not in selected_col_attrs:
+        selected_col_attrs.append(col_extra)
+    for attr in col_attrs:
+        if len(selected_col_attrs) >= min(3, len(col_attrs)):
+            break
+        if attr not in selected_col_attrs:
+            selected_col_attrs.append(attr)
+
+    selected_row_rules = [pick_rule_for_attr(row_rules, attr) for attr in selected_row_attrs]
+    selected_col_rules = [pick_rule_for_attr(col_rules, attr) for attr in selected_col_attrs]
+    selected_global_rules = [pick_rule_for_attr(global_rules, attr) for attr in global_attrs]
+
+    return (
+        [rule for rule in selected_row_rules if rule is not None],
+        [rule for rule in selected_col_rules if rule is not None],
+        [rule for rule in selected_global_rules if rule is not None],
+    )
+
+
 def build_truth_constraints(domain, truth_solution, item_lookup, rows, cols):
     spec = DOMAIN_SPECS[domain]
+    row_rule_specs, col_rule_specs, global_rule_specs = select_constraint_rule_sets(spec)
     row_constraints = []
     col_constraints = []
 
     for row_index in range(rows):
         row_constraints.append(
             make_aggregate_constraints(
-                spec["row_rules"],
+                row_rule_specs,
                 row_items(truth_solution, item_lookup, row_index),
                 "row",
                 row_index,
@@ -75,7 +164,7 @@ def build_truth_constraints(domain, truth_solution, item_lookup, rows, cols):
     for col_index in range(cols):
         col_constraints.append(
             make_aggregate_constraints(
-                spec["col_rules"],
+                col_rule_specs,
                 col_items(truth_solution, item_lookup, col_index),
                 "col",
                 col_index,
@@ -84,7 +173,7 @@ def build_truth_constraints(domain, truth_solution, item_lookup, rows, cols):
         )
 
     global_constraints = make_aggregate_constraints(
-        spec["global_rules"],
+        global_rule_specs,
         global_items(truth_solution, item_lookup),
         "global",
         "global",
@@ -132,13 +221,13 @@ def candidate_status(
     row_group = row_items(trial_solution, item_lookup, row_index)
     row_ok = all(
         aggregate_constraint_satisfied(rule, row_constraints[row_index][rule["name"]], row_group)
-        for rule in spec["row_rules"]
+        for rule in active_rules(spec["row_rules"], row_constraints[row_index])
     )
 
     col_group = col_items(trial_solution, item_lookup, col_index)
     col_ok = all(
         aggregate_constraint_satisfied(rule, col_constraints[col_index][rule["name"]], col_group)
-        for rule in spec["col_rules"]
+        for rule in active_rules(spec["col_rules"], col_constraints[col_index])
     )
 
     global_group = global_items(trial_solution, item_lookup)
@@ -150,7 +239,7 @@ def candidate_status(
             truth_solution=trial_solution,
             item_lookup=item_lookup,
         )
-        for rule in spec["global_rules"]
+        for rule in active_rules(spec["global_rules"], global_constraints)
     )
 
     return row_ok, col_ok, global_ok
@@ -287,7 +376,7 @@ def build_instance(
             return None
         slots.append(slot_entry)
 
-    return {
+    instance = {
         "domain": domain,
         "meta": {"rows": rows, "cols": cols},
         "global_constraints": global_constraints,
@@ -297,6 +386,8 @@ def build_instance(
         "col_constraints": col_constraints,
         "slots": slots,
     }
+    instance["task_instruction"] = build_task_instruction_from_instance(instance)
+    return instance
 
 
 def build_output_filename(
@@ -324,6 +415,85 @@ def build_output_filename(
         filename += f"_seed{seed}"
     return f"{filename}.json"
 
+
+
+def normalize_dimension_values(values):
+    if isinstance(values, int):
+        return [values]
+    if not values:
+        raise ValueError("dimension values must not be empty")
+    return [int(value) for value in values]
+
+
+def summarize_dataset(dataset):
+    candidate_counts = [len(slot["candidate_ids"]) for slot in dataset["slots"]]
+    valid_counts = [len(slot.get("valid_candidate_ids", [])) for slot in dataset["slots"]]
+    return {
+        "instance_id": dataset.get("instance_id"),
+        "avg_candidates": round(sum(candidate_counts) / len(candidate_counts), 2),
+        "avg_valid_options": round(sum(valid_counts) / len(valid_counts), 2),
+        "item_pool_size": len(dataset["item_pool"]),
+    }
+
+
+def validate_payload(payload, candidates_per_slot=DEFAULT_CANDIDATES_PER_SLOT, valid_options=DEFAULT_VALID_OPTIONS):
+    summaries = []
+    for dataset in payload["instances"]:
+        if not validate_dataset(
+            dataset,
+            candidates_per_slot=candidates_per_slot,
+            valid_options=valid_options,
+        ):
+            return False, []
+        summaries.append(summarize_dataset(dataset))
+    return True, summaries
+
+
+def validate_dataset_file(path, candidates_per_slot=DEFAULT_CANDIDATES_PER_SLOT, valid_options=DEFAULT_VALID_OPTIONS):
+    with open(path, "r", encoding="utf-8") as input_file:
+        payload = json.load(input_file)
+    return validate_payload(
+        payload,
+        candidates_per_slot=candidates_per_slot,
+        valid_options=valid_options,
+    )
+
+
+def print_validation_report(domain, summaries):
+    headers = [
+        "domain",
+        "instance_id",
+        "avg_candidates_each_slot",
+        "avg_valid_options_each_slot",
+        "item_pool_size",
+    ]
+    rows = []
+    for summary in summaries:
+        rows.append(
+            [
+                domain,
+                summary["instance_id"],
+                summary["avg_candidates"],
+                summary["avg_valid_options"],
+                summary["item_pool_size"],
+            ]
+        )
+
+    widths = [len(header) for header in headers]
+    for row in rows:
+        for index, value in enumerate(row):
+            widths[index] = max(widths[index], len(str(value)))
+
+    def format_row(values):
+        return "| " + " | ".join(str(value).ljust(widths[index]) for index, value in enumerate(values)) + " |"
+
+    separator = "+-" + "-+-".join("-" * width for width in widths) + "-+"
+    print(separator)
+    print(format_row(headers))
+    print(separator)
+    for row in rows:
+        print(format_row(row))
+    print(separator)
 
 def generate_dataset(
     domain="course",
@@ -404,14 +574,6 @@ def generate_dataset(
     return payload
 
 
-def normalize_dimension_values(values):
-    if isinstance(values, int):
-        return [values]
-    if not values:
-        raise ValueError("dimension values must not be empty")
-    return [int(value) for value in values]
-
-
 def generate_all_datasets(
     domains=SUPPORTED_DOMAINS,
     num_instances=DEFAULT_NUM_INSTANCES,
@@ -461,40 +623,6 @@ def build_arg_parser():
     parser.add_argument("--validate-file", help="Validate an existing dataset JSON file instead of generating.")
     return parser
 
-
-def print_validation_report(domain, summaries):
-    headers = [
-        "domain",
-        "instance_id",
-        "candidates(min/max/avg)",
-        "valid(min/max/avg)",
-    ]
-    rows = []
-    for summary in summaries:
-        rows.append(
-            [
-                domain,
-                summary["instance_id"],
-                f"{summary['min_candidates']}/{summary['max_candidates']}/{summary['avg_candidates']}",
-                f"{summary['min_valid_options']}/{summary['max_valid_options']}/{summary['avg_valid_options']}",
-            ]
-        )
-
-    widths = [len(header) for header in headers]
-    for row in rows:
-        for index, value in enumerate(row):
-            widths[index] = max(widths[index], len(str(value)))
-
-    def format_row(values):
-        return "| " + " | ".join(str(value).ljust(widths[index]) for index, value in enumerate(values)) + " |"
-
-    separator = "+-" + "-+-".join("-" * width for width in widths) + "-+"
-    print(separator)
-    print(format_row(headers))
-    print(separator)
-    for row in rows:
-        print(format_row(row))
-    print(separator)
 
 
 def main():

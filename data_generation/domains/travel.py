@@ -33,12 +33,16 @@ SPEC = {
         {"name": "total_duration_max", "type": "sum_max", "attr": "duration", "slack": 2, "per_item_cap": 6},
         {"name": "max_crowd", "type": "max_cap", "attr": "crowd_level", "cap": 5},
         {"name": "same_location_row_max", "type": "repeat_max", "attr": "location"},
+        {"name": "same_category_row_max", "type": "repeat_max", "attr": "category"},
+        {"name": "total_rating_min", "type": "sum_min", "attr": "rating", "slack": 3, "floor": 1},
     ],
     "col_rules": [
         {"name": "total_cost_max", "type": "sum_max", "attr": "cost", "slack": 120, "per_item_cap": 200},
         {"name": "total_duration_max", "type": "sum_max", "attr": "duration", "slack": 2, "per_item_cap": 6},
         {"name": "max_crowd", "type": "max_cap", "attr": "crowd_level", "cap": 5},
         {"name": "same_location_col_max", "type": "repeat_max", "attr": "location"},
+        {"name": "same_category_col_max", "type": "repeat_max", "attr": "category"},
+        {"name": "total_rating_min", "type": "sum_min", "attr": "rating", "slack": 3, "floor": 1},
     ],
     "global_rules": [
         {"name": "total_budget_max", "type": "sum_max", "attr": "cost", "slack": 300, "per_item_cap": 200},
@@ -46,6 +50,7 @@ SPEC = {
         {"name": "outdoor_min", "type": "count_min", "predicate_key": "category", "predicate_value": "outdoor", "slack": 1},
         {"name": "location_repeat_max", "type": "repeat_max", "attr": "location"},
         {"name": "daily_duration_max", "type": "max_row_sum", "attr": "duration", "slack": 2, "per_item_cap": 6},
+        {"name": "rating_total_min", "type": "sum_min", "attr": "rating", "slack": 10, "floor": 1},
     ],
     "min_slot_matches": 6,
 }

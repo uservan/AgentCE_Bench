@@ -40,23 +40,25 @@ SPEC = {
     ],
     "row_rules": [
         {"name": "total_credits_min", "type": "sum_min", "attr": "credits", "slack": 2, "floor": 1},
-        {"name": "total_credits_max", "type": "sum_max", "attr": "credits", "slack": 2, "per_item_cap": 4},
         {"name": "total_price_max", "type": "sum_max", "attr": "price", "slack": 300, "per_item_cap": 500},
         {"name": "max_difficulty", "type": "max_cap", "attr": "difficulty", "cap": 5},
         {"name": "same_teacher_row_max", "type": "repeat_max", "attr": "teacher"},
+        {"name": "same_category_row_max", "type": "repeat_max", "attr": "category"},
+        {"name": "total_workload_max", "type": "sum_max", "attr": "workload", "slack": 6, "per_item_cap": 8},
     ],
     "col_rules": [
         {"name": "total_credits_min", "type": "sum_min", "attr": "credits", "slack": 2, "floor": 1},
-        {"name": "total_credits_max", "type": "sum_max", "attr": "credits", "slack": 2, "per_item_cap": 4},
         {"name": "total_price_max", "type": "sum_max", "attr": "price", "slack": 300, "per_item_cap": 500},
-        {"name": "max_difficulty", "type": "max_cap", "attr": "difficulty", "cap": 5},
         {"name": "same_teacher_col_max", "type": "repeat_max", "attr": "teacher"},
+        {"name": "max_workload", "type": "max_cap", "attr": "workload", "cap": 8},
+        {"name": "same_category_col_max", "type": "repeat_max", "attr": "category"},
     ],
     "global_rules": [
         {"name": "total_credits_min", "type": "sum_min", "attr": "credits", "slack": 8, "floor": 1},
-        {"name": "total_credits_max", "type": "sum_max", "attr": "credits", "slack": 8, "per_item_cap": 4},
         {"name": "total_price_max", "type": "sum_max", "attr": "price", "slack": 1500, "per_item_cap": 500},
         {"name": "same_teacher_week_max", "type": "repeat_max", "attr": "teacher"},
+        {"name": "same_category_week_max", "type": "repeat_max", "attr": "category"},
+        {"name": "total_workload_max", "type": "sum_max", "attr": "workload", "slack": 20, "per_item_cap": 8},
     ],
     "min_slot_matches": 6,
 }
@@ -73,4 +75,5 @@ def build_item(index):
         "credits": random.randint(1, 4),
         "price": random.randint(100, 500),
         "teacher": random.choice(TEACHERS),
+        "workload": random.randint(1, 8),
     }

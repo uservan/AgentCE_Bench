@@ -131,6 +131,8 @@ def validate_generated_results(
 
     for row_index, row_items in enumerate(normalized_grid):
         for rule in spec["row_rules"]:
+            if rule["name"] not in row_constraints[row_index]:
+                continue
             if not aggregate_constraint_satisfied(rule, row_constraints[row_index][rule["name"]], row_items):
                 message = f"row constraint '{rule['name']}' failed at row {row_index}"
                 return (False, message) if return_details else False
@@ -139,6 +141,8 @@ def validate_generated_results(
     for col_index in range(cols):
         col_items = [normalized_grid[row_index][col_index] for row_index in range(len(normalized_grid))]
         for rule in spec["col_rules"]:
+            if rule["name"] not in col_constraints[col_index]:
+                continue
             if not aggregate_constraint_satisfied(rule, col_constraints[col_index][rule["name"]], col_items):
                 message = f"col constraint '{rule['name']}' failed at col {col_index}"
                 return (False, message) if return_details else False
@@ -150,6 +154,8 @@ def validate_generated_results(
         for item, item_id in zip(row, id_row)
     }
     for rule in spec["global_rules"]:
+        if rule["name"] not in global_constraints:
+            continue
         if not aggregate_constraint_satisfied(
             rule,
             global_constraints[rule["name"]],
@@ -178,7 +184,7 @@ def validate_generated_results_from_dataset(
             validate_generated_results_from_dataset,
         )
 
-        dataset = load_dataset("load_datasets/data/course_dataset_n1_r5_c5_cand16_valid4_seed42.json")
+        dataset = load_dataset("data/course_dataset_n1_r5_c5_cand16_valid4_seed42.json")
         ok, message = validate_generated_results_from_dataset(
             dataset,
             dataset["truth_solution"],

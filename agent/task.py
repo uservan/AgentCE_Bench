@@ -104,7 +104,71 @@ class Task:
 
     def eval(self) -> Any:
         """评估任务完成情况。"""
-        pass
+        try:
+            from data_generation.validation import (
+                validate_col_constraints,
+                validate_global_constraints,
+                validate_row_constraints,
+            )
+        except ImportError:
+            from validation import (
+                validate_col_constraints,
+                validate_global_constraints,
+                validate_row_constraints,
+            )
+
+        solution = self.agent_solution
+        dataset = self.dataset_object
+        rows = dataset.meta["rows"]
+        cols = dataset.meta["cols"]
+
+        if len(solution) != rows or any(len(row) != cols for row in solution):
+            return {
+                "score": False,
+                "reason": f"solution shape does not match expected {rows}x{cols} grid",
+            }
+
+        if any(item_id is None for row in solution for item_id in row):
+            return {
+                "score": False,
+                "reason": "solution still contains empty slots",
+            }
+
+        for row_index in range(rows):
+            is_valid, reason = validate_row_constraints(
+                solution=solution,
+                domain=dataset.domain,
+                row_index=row_index,
+                row_constraints=dataset.row_constraints,
+                item_pool=dataset.item_pool,
+                slots=dataset.slots,
+            )
+            if not is_valid:
+                return {"score": False, "reason": reason}
+
+        for col_index in range(cols):
+            is_valid, reason = validate_col_constraints(
+                solution=solution,
+                domain=dataset.domain,
+                col_index=col_index,
+                col_constraints=dataset.col_constraints,
+                item_pool=dataset.item_pool,
+                slots=dataset.slots,
+            )
+            if not is_valid:
+                return {"score": False, "reason": reason}
+
+        is_valid, reason = validate_global_constraints(
+            solution=solution,
+            domain=dataset.domain,
+            global_constraints=dataset.global_constraints,
+            item_pool=dataset.item_pool,
+            slots=dataset.slots,
+        )
+        if not is_valid:
+            return {"score": False, "reason": reason}
+
+        return {"score": True, "reason": None}
 
     def call_tool(
         self,

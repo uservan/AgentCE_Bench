@@ -1,55 +1,10 @@
 import json
 import os
-import sys
 from dataclasses import dataclass
 
-try:
-    from .config import get_grid_description, get_task_instruction
-except ImportError:
-    from config import get_grid_description, get_task_instruction
 
-try:
-    from data_generation.domains import DOMAIN_SPECS
-except ImportError:
-    PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
-    if PROJECT_ROOT not in sys.path:
-        sys.path.append(PROJECT_ROOT)
-    from data_generation.domains import DOMAIN_SPECS
-
-
-DEFAULT_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-
-DOMAIN_ITEM_LABELS = {
-    "course": ("course", "courses"),
-    "shopping": ("product", "products"),
-    "travel": ("activity", "activities"),
-    "workforce": ("worker", "workers"),
-    "meal": ("dish", "dishes"),
-    "pc_build": ("component", "components"),
-}
-
-ATTRIBUTE_LABELS = {
-    "credits": "credits",
-    "price": "price",
-    "difficulty": "difficulty",
-    "teacher": "teacher",
-    "calories": "calories",
-    "protein": "protein",
-    "brand": "brand",
-    "cost": "cost",
-    "duration": "duration",
-    "crowd_level": "crowd level",
-    "location": "location",
-    "skill": "skill",
-    "hourly_cost": "hourly cost",
-    "experience": "experience",
-    "cuisine": "cuisine",
-    "dish_id": "dish",
-    "performance": "performance",
-    "power": "power",
-    "worker_id": "worker",
-}
-
+DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+LEGACY_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 @dataclass
 class SavedDatasetObject:
@@ -66,117 +21,9 @@ class SavedDatasetObject:
     source_path: str
     source_filename: str
 
-
-def _label_for_attr(attr_name):
-    return ATTRIBUTE_LABELS.get(attr_name, attr_name.replace("_", " "))
-
-
-def _format_rule_text(domain, rule, value, scope_text):
-    item_singular, item_plural = DOMAIN_ITEM_LABELS[domain]
-    rule_type = rule["type"]
-
-    if rule_type == "sum_min":
-        attr_label = _label_for_attr(rule["attr"])
-        return f"the total {attr_label} of all {item_plural} in {scope_text} must be at least {value}"
-
-    if rule_type == "sum_max":
-        attr_label = _label_for_attr(rule["attr"])
-        return f"the total {attr_label} of all {item_plural} in {scope_text} must be at most {value}"
-
-    if rule_type == "max_cap":
-        attr_label = _label_for_attr(rule["attr"])
-        return f"the maximum {attr_label} of any {item_singular} in {scope_text} must be at most {value}"
-
-    if rule_type == "repeat_max":
-        attr_label = _label_for_attr(rule["attr"])
-        return f"the same {attr_label} can appear at most {value} times in {scope_text}"
-
-    if rule_type == "count_min":
-        predicate_key = _label_for_attr(rule["predicate_key"])
-        predicate_value = rule["predicate_value"]
-        return (
-            f"there must be at least {value} {item_plural} in {scope_text} whose "
-            f"{predicate_key} is {predicate_value}"
-        )
-
-    if rule_type == "count_min_threshold":
-        attr_label = _label_for_attr(rule["attr"])
-        threshold = rule["threshold"]
-        return (
-            f"there must be at least {value} {item_plural} in {scope_text} whose "
-            f"{attr_label} is at least {threshold}"
-        )
-
-    if rule_type == "max_row_sum":
-        attr_label = _label_for_attr(rule["attr"])
-        return f"for any single row in {scope_text}, the total {attr_label} must be at most {value}"
-
-    raise ValueError(f"Unsupported rule type for natural-language formatting: {rule_type}")
-
-
-def _numbered_rule_texts(rule_texts):
-    return "\n".join(
-        f"({index}) {rule_text}."
-        for index, rule_text in enumerate(rule_texts, start=1)
-    )
-
-
-def _format_global_constraints(domain, global_constraints):
-    rule_texts = []
-    for rule in DOMAIN_SPECS[domain]["global_rules"]:
-        value = global_constraints[rule["name"]]
-        rule_texts.append(_format_rule_text(domain, rule, value, "the whole grid"))
-    return (
-        "Across the whole grid, the plan must satisfy these global constraints:\n"
-        + _numbered_rule_texts(rule_texts)
-    )
-
-
-def _format_row_constraints(domain, row_constraints, row_label):
-    parts = []
-    for constraint in row_constraints:
-        row_index = constraint["row"]
-        rule_texts = []
-        for rule in DOMAIN_SPECS[domain]["row_rules"]:
-            value = constraint[rule["name"]]
-            rule_texts.append(_format_rule_text(domain, rule, value, f"{row_label} {row_index}"))
-        parts.append(f"For {row_label} {row_index}:\n{_numbered_rule_texts(rule_texts)}")
-    return "For the row constraints:\n" + "\n\n".join(parts)
-
-
-def _format_col_constraints(domain, col_constraints, col_label):
-    parts = []
-    for constraint in col_constraints:
-        col_index = constraint["col"]
-        rule_texts = []
-        for rule in DOMAIN_SPECS[domain]["col_rules"]:
-            value = constraint[rule["name"]]
-            rule_texts.append(_format_rule_text(domain, rule, value, f"{col_label} {col_index}"))
-        parts.append(f"For {col_label} {col_index}:\n{_numbered_rule_texts(rule_texts)}")
-    return "For the column constraints:\n" + "\n\n".join(parts)
-
-
 def _build_dataset_object(instance, source_path):
-    domain = instance["domain"]
-    grid_description = get_grid_description(
-        domain,
-        rows=instance["meta"]["rows"],
-        cols=instance["meta"]["cols"],
-    )
-    global_constraints_text = _format_global_constraints(domain, instance["global_constraints"])
-    row_constraints_text = _format_row_constraints(
-        domain,
-        instance["row_constraints"],
-        grid_description["row_label"],
-    )
-    col_constraints_text = _format_col_constraints(
-        domain,
-        instance["col_constraints"],
-        grid_description["col_label"],
-    )
-
     return SavedDatasetObject(
-        domain=domain,
+        domain=instance["domain"],
         instance_id=instance["instance_id"],
         meta=instance["meta"],
         global_constraints=instance["global_constraints"],
@@ -185,15 +32,7 @@ def _build_dataset_object(instance, source_path):
         item_pool=instance["item_pool"],
         truth_solution=instance["truth_solution"],
         slots=instance["slots"],
-        task_instruction=get_task_instruction(
-            domain,
-            rows=instance["meta"]["rows"],
-            cols=instance["meta"]["cols"],
-            grid_description=grid_description["intro"],
-            global_constraints_text=global_constraints_text,
-            row_constraints_text=row_constraints_text,
-            col_constraints_text=col_constraints_text,
-        ),
+        task_instruction=instance["task_instruction"],
         source_path=source_path,
         source_filename=os.path.basename(source_path),
     )
@@ -220,6 +59,8 @@ def load_dataset_object(path, instance_index=0):
 
 
 def load_all_dataset_objects(data_dir=DEFAULT_DATA_DIR):
+    if data_dir == DEFAULT_DATA_DIR and not os.path.isdir(data_dir) and os.path.isdir(LEGACY_DATA_DIR):
+        data_dir = LEGACY_DATA_DIR
     if not os.path.isdir(data_dir):
         raise FileNotFoundError(f"Data directory does not exist: {data_dir}")
 
