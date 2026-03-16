@@ -1,9 +1,11 @@
 import json
+import os
 import random
 from typing import Any, Callable
 
 from .agent import Agent
-from .task import Task, RunResult
+from .run_result import RunResult
+from .task import Task
 
 
 class CacheEnv:
@@ -56,6 +58,8 @@ class CacheEnv:
         遍历 dataset_objects，执行全部 task，汇总结果并保存到 JSON 文件。
         """
         total_runs = self.get_total_runs()
+        output_root = self._resolve_output_root(save_path)
+        saved_paths: list[str] = []
         run_index = 0
         for dataset_obj in self.dataset_objects:
             for hidden_rate in self.hidden_rates:
@@ -83,10 +87,21 @@ class CacheEnv:
                                     "trial_index": trial_index,
                                     "num_trials": self.num_trials,
                                     "seed": seed,
-                                    "save_path": save_path,
+                                    "save_path": output_root,
                                 }
                             )
                         run_result = self.run_task(task, agent)
+                        saved_file_path = self._save_run_result(
+                            run_result=run_result,
+                            save_root=output_root,
+                            model_name=agent.model,
+                            instance_id=getattr(dataset_obj, "instance_id", ""),
+                            hidden_rate=hidden_rate,
+                            tool_failure_rate=tool_failure_rate,
+                            trial_index=trial_index,
+                            seed=seed,
+                        )
+                        saved_paths.append(saved_file_path)
                         if progress_callback is not None:
                             progress_callback(
                                 {
@@ -102,9 +117,44 @@ class CacheEnv:
                                     "seed": seed,
                                     "status": run_result.status,
                                     "score": run_result.score,
-                                    "save_path": save_path,
+                                    "save_path": saved_file_path,
                                 }
                             )
+        return saved_paths
+
+    def _resolve_output_root(self, save_path: str) -> str:
+        normalized_path = os.path.normpath(save_path)
+        if normalized_path.endswith(".json"):
+            return os.path.dirname(normalized_path) or "."
+        return normalized_path
+
+    def _save_run_result(
+        self,
+        run_result: RunResult,
+        save_root: str,
+        model_name: str,
+        instance_id: str,
+        hidden_rate: float,
+        tool_failure_rate: float,
+        trial_index: int,
+        seed: int,
+    ) -> str:
+        file_name = f"{hidden_rate}_{tool_failure_rate}_{trial_index}.json"
+        output_path = os.path.join(save_root, model_name, instance_id, file_name)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        payload = {
+            "model_name": model_name,
+            "instance_id": instance_id,
+            "hidden_rate": hidden_rate,
+            "tool_failure_rate": tool_failure_rate,
+            "trial_index": trial_index,
+            "seed": seed,
+            "run_result": run_result.to_dict(),
+        }
+        with open(output_path, "w", encoding="utf-8") as output_file:
+            json.dump(payload, output_file, ensure_ascii=False, indent=2)
+        return output_path
 
     def _extract_numeric_score(self, score: Any) -> float | None:
         if isinstance(score, (int, float)):

@@ -5,8 +5,9 @@ from typing import Any, Optional
 
 from litellm import completion
 
+from .run_result import RunResult
 from .utils import get_response_cost, get_response_usage
-from .task import Task, RunResult
+from .task import Task
 
 logger = logging.getLogger(__name__)
 

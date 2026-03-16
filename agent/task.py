@@ -1,39 +1,14 @@
 import copy
 import json
 import random
-from typing import Any, Optional
+from typing import Any
+
+from .task_prompt import build_initial_messages, is_done_tool_message
 
 try:
     from load_datasets.loader import SavedDatasetObject
 except ImportError:
     SavedDatasetObject = Any  # type: ignore
-
-
-class RunResult:
-    """单次 run 的结果。"""
-
-    def __init__(
-        self,
-        task: "Task",
-        content: Any,
-        usage: Optional[dict[str, Any]] = None,
-        raw_messages: Optional[list[dict[str, Any]]] = None,
-        status: str = "succeed",
-        reason: Optional[str] = None,
-    ):
-        self.task = task
-        self.content = content
-        self.usage = usage or {}
-        self.raw_messages = raw_messages or []
-        self.status = status
-        self.reason = reason
-
-    def set_score(self, score: Any):
-        self.usage["score"] = score
-
-    @property
-    def score(self):
-        return self.usage.get("score")
 
 
 def _build_partial_solution(truth_solution: list, hidden_rate: float, seed: int | None = None) -> list:
@@ -86,21 +61,15 @@ class Task:
         self.agent_solution: list = copy.deepcopy(self.partial_solution)
 
     def build_initial_messages(self) -> list[dict[str, Any]]:
-        """构建初始消息列表。system 用 task_instruction，user 根据 partial_solution 描述当前状态并请求完成。"""
-        system_content = self.dataset_object.task_instruction
-        partial_repr = json.dumps(self.partial_solution, ensure_ascii=False)
-        user_content = (
-            f"The grid has some slots already filled. Current state (null = empty slot to fill):\n\n{partial_repr}\n\n"
-            "Please complete the empty slots using the available tools."
-        )
-        return [
-            {"role": "system", "content": system_content},
-            {"role": "user", "content": user_content},
-        ]
+        """构建初始消息列表。"""
+        return build_initial_messages(self)
 
     def is_finished(self, messages) -> bool:
         """根据消息判断任务是否完成。"""
-        return False  # TODO: 实现完成条件判断
+        for msg in messages:
+            if is_done_tool_message(msg):
+                return True
+        return False
 
     def eval(self) -> Any:
         """评估任务完成情况。"""
@@ -191,6 +160,9 @@ class Task:
         try:
             from tools import get_saved_dataset_tool_schemas
             domain = self.dataset_object.domain if self.tools_domain_only else None
-            return [tool.openai_schema for tool in get_saved_dataset_tool_schemas(domain=domain)]
+            tool_schemas = [tool.openai_schema for tool in get_saved_dataset_tool_schemas(domain=domain)]
+            rng = random.Random(self.seed) if self.seed is not None else random.Random()
+            rng.shuffle(tool_schemas)
+            return tool_schemas
         except ImportError:
             return []
