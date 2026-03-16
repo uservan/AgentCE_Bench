@@ -224,6 +224,23 @@ def main(
     average_cost = average_usage.get("cost")
     average_time = average_usage.get("time")
     average_tool_calls = average_usage.get("tool_calls_num")
+    summary = {
+        "model": model,
+        "domains": domain,
+        "dataset_objects": len(dataset_objects),
+        "total_runs": total_runs,
+        "average_score": average_score,
+        "average_prompt_tokens": average_prompt_tokens,
+        "average_completion_tokens": average_completion_tokens,
+        "average_total_tokens": average_total_tokens,
+        "average_tool_calls": average_tool_calls,
+        "average_time_seconds": average_time,
+        "average_cost": average_cost,
+        "save_path": save_path,
+        "status": "Completed",
+    }
+    if isinstance(result, dict):
+        result["summary"] = summary
 
     ConsoleDisplay.print_kv_panel(
         title="[bold green]Benchmark Run Finished[/bold green]",
