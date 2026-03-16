@@ -13,6 +13,15 @@ DOMAIN_AGENT_INTROS = {
     "pc_build": "You are solving a PC build configuration task.",
 }
 
+DOMAIN_ITEM_ATTRIBUTES = {
+    "course": ["name", "category", "difficulty", "credits", "price", "teacher", "workload"],
+    "shopping": ["name", "category", "price", "calories", "protein", "brand"],
+    "travel": ["name", "category", "cost", "duration", "crowd_level", "location"],
+    "workforce": ["name", "hourly_cost", "skill", "experience", "department", "reliability"],
+    "meal": ["name", "calories", "protein", "price", "cuisine"],
+    "pc_build": ["name", "category", "price", "performance", "power", "brand"],
+}
+
 BENCHMARK_SYSTEM_PROMPT = """
 <instructions>
 {agent_instruction}
@@ -58,11 +67,16 @@ def build_agent_instruction(task: Any) -> str:
         domain,
         "You are solving a structured grid-completion task.",
     )
+    item_attributes = DOMAIN_ITEM_ATTRIBUTES.get(domain, ["name"])
+    item_attributes_text = ", ".join(item_attributes)
     return "\n".join(
         [
             domain_intro,
             "Follow the task policy exactly.",
+            f"Each item in this domain has attributes such as: {item_attributes_text}.",
             "Use tools to inspect the current grid, reason about candidate ids, and update slots.",
+            "Assume all pre-filled non-null slots are already correct, valid, and fixed.",
+            "You must make sure the final solution satisfies the global constraints, every row constraints, and every column constraints.",
             "Never change pre-filled non-null slots unless a tool result or task policy clearly requires it.",
             "Your goal is to produce a fully filled grid that satisfies all constraints.",
         ]
@@ -73,6 +87,9 @@ def build_tool_usage_instruction(task: Any) -> str:
     guidance_lines = [
         "Use the available tools instead of pretending to know hidden slot values.",
         "Use `set_slot` to fill or clear a slot in the grid.",
+        "Use the single-item info tool when you need all attributes for one item id.",
+        "Use the multi-item attribute tool when you want one selected attribute for up to 5 item ids at once.",
+        "Before finishing, explicitly check row constraints, column constraints, and global constraints with the available checking tools.",
         "Use the available query or checking tools when you need to inspect the current state or validate progress.",
         f"When the grid is complete and you are satisfied with the result, call `{STOP_FUNCTION_NAME}`.",
         f"Your final action must be a single call to `{STOP_FUNCTION_NAME}` with no other tool calls in that message.",

@@ -2,3 +2,4 @@ test/__pycache__/
 __pycache__/
 debug_vllm/
 **/*.pyc
+results/

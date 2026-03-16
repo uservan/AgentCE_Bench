@@ -14,6 +14,7 @@ class CourseToolsHandler(BaseToolsHandler):
         self.tools.update({
             "query_course_slot_candidates": self.query_course_slot_candidates,
             "get_course_item_info": self.get_course_item_info,
+            "get_course_item_attributes": self.get_course_item_attributes,
             "check_course_row_constraints": self.check_course_row_constraints,
             "check_course_col_constraints": self.check_course_col_constraints,
             "check_course_global_constraints": self.check_course_global_constraints,
@@ -27,12 +28,20 @@ class CourseToolsHandler(BaseToolsHandler):
         """
         return self._query_slot_candidates(row, col, summary_fields=["name", "category"])
 
-    def get_course_item_info(self, ids: list[str]) -> Messages:
-        """Return full course information for up to three ids.
+    def get_course_item_info(self, id: str) -> Messages:
+        """Return full course information for one id.
 
-        ids: List of course item ids as strings, with at most 3 items.
+        id: Course item id as a string.
         """
-        return self._get_item_info(ids, max_items=3)
+        return self._get_item_info(id)
+
+    def get_course_item_attributes(self, ids: list[str], field: str) -> Messages:
+        """Return one selected attribute value for up to five course ids.
+
+        ids: List of course item ids as strings, with at most 5 items.
+        field: Attribute name to retrieve for each course item.
+        """
+        return self._get_item_attribute_values(ids, field, max_items=5)
 
     def check_course_row_constraints(self, row: int) -> Messages:
         """Check whether a row satisfies the course row constraints.

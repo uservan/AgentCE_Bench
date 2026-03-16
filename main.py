@@ -213,6 +213,18 @@ def main(
         result = cache_env.run(agent=agent, save_path=save_path, progress_callback=on_progress)
         progress.update(task_id, completed=total_runs, description="Benchmark tasks completed")
 
+    average_score = result.get("average_score") if isinstance(result, dict) else None
+    average_usage = result.get("average_usage", {}) if isinstance(result, dict) else {}
+    average_score_display = (
+        f"{average_score:.4f}" if isinstance(average_score, (int, float)) else "-"
+    )
+    average_prompt_tokens = average_usage.get("prompt_tokens")
+    average_completion_tokens = average_usage.get("completion_tokens")
+    average_total_tokens = average_usage.get("total_tokens")
+    average_cost = average_usage.get("cost")
+    average_time = average_usage.get("time")
+    average_tool_calls = average_usage.get("tool_calls_num")
+
     ConsoleDisplay.print_kv_panel(
         title="[bold green]Benchmark Run Finished[/bold green]",
         items=[
@@ -220,6 +232,13 @@ def main(
             ("Domains", ", ".join(domain)),
             ("Dataset Objects", len(dataset_objects)),
             ("Total Runs", total_runs),
+            ("Average Score", average_score_display),
+            ("Avg Prompt Tokens", f"{average_prompt_tokens:.2f}" if isinstance(average_prompt_tokens, (int, float)) else "-"),
+            ("Avg Completion Tokens", f"{average_completion_tokens:.2f}" if isinstance(average_completion_tokens, (int, float)) else "-"),
+            ("Avg Total Tokens", f"{average_total_tokens:.2f}" if isinstance(average_total_tokens, (int, float)) else "-"),
+            ("Avg Tool Calls", f"{average_tool_calls:.2f}" if isinstance(average_tool_calls, (int, float)) else "-"),
+            ("Avg Time (s)", f"{average_time:.2f}" if isinstance(average_time, (int, float)) else "-"),
+            ("Avg Cost", f"{average_cost:.6f}" if isinstance(average_cost, (int, float)) else "-"),
             ("Save Path", save_path),
             ("Status", "[green]Completed[/green]"),
         ],

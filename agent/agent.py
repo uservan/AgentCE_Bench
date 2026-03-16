@@ -2,9 +2,10 @@ import json
 import logging
 import time
 from typing import Any, Optional
-
+import copy
 from litellm import completion
 
+from .agent_tools_parse import parse_tool_calls
 from .run_result import RunResult
 from .utils import get_response_cost, get_response_usage
 from .task import Task
@@ -46,8 +47,14 @@ class Agent:
         if tool_schemas and request_params.get("tool_choice") is None:
             request_params["tool_choice"] = "auto"
 
-        total_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0,
-                       "cost": 0.0, "time": 0.0}
+        total_usage = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "cost": 0.0,
+            "time": 0.0,
+            "tool_calls_num": 0,
+        }
         step_count = 0
         raw_messages = []
         status = "succeed"
@@ -72,7 +79,7 @@ class Agent:
                     )
                 except Exception as e:
                     logger.error(e)
-                    continue
+                    raise e
                 step_count += 1
                 cost = get_response_cost(response)
                 usage = get_response_usage(response)
@@ -82,7 +89,11 @@ class Agent:
                 total_usage["cost"] += cost
 
                 response = response.choices[0]
-                raw_messages.append(response.to_dict())
+                self._append_raw_message(
+                    raw_messages,
+                    kind="model_response",
+                    message=response.to_dict(),
+                )
                 response_message = response.message
                 try:
                     finish_reason = response.finish_reason
@@ -93,46 +104,56 @@ class Agent:
                     raise e
                 assert response_message.role == "assistant", ("The response should be an assistant message")
 
-                assistant_content = response_message.content or ""
+                assistant_content = (
+                        (getattr(response_message, "reasoning_content", None) or "") + ""
+                        + (getattr(response_message, "content", None) or "")
+                    ).strip()
                 assistant_message = {
                     "role": "assistant",
                     "content": assistant_content,
                     "tool_calls": None
                 }
-                tool_calls = response_message.tool_calls or []
-                if tool_calls:
+                parsed_tool_calls = parse_tool_calls(self.model, response_message)
+                normalized_tool_calls = []
+                if parsed_tool_calls:
                     assistant_message["tool_calls"] = [
                         {
-                            "id": tool_call.id,
+                            "id": f"tool_call_{step_count}_{index}",
                             "type": "function",
                             "function": {
-                                "name": tool_call.function.name,
-                                "arguments": json.dumps(tool_call.function.arguments),
+                                "name": tool_call["name"],
+                                "arguments": tool_call["arguments"],
                             },
                         }
-                        for tool_call in tool_calls
+                        for index, tool_call in enumerate(parsed_tool_calls, start=1)
                     ]
+                    normalized_tool_calls = assistant_message["tool_calls"]
                 litellm_messages.append(assistant_message)
-
-                for tool_call in tool_calls:
-                    tool_name = tool_call.function.name
-                    tool_args = json.loads(tool_call.function.arguments or "{}")
+                # self._append_raw_message(
+                #     raw_messages,
+                #     kind="assistant_message",
+                #     message=assistant_message,
+                # )
+                raw_r = []
+                for tool_call in normalized_tool_calls:
+                    tool_name = tool_call["function"]["name"]
+                    tool_args = json.loads(tool_call["function"]["arguments"] or "{}")
                     tool_result = task.call_tool(tool_name, tool_args)
-                    litellm_messages.append(
-                        {
+                    total_usage["tool_calls_num"] += 1
+                    r = {
                             "role": "tool",
-                            "tool_call_id": tool_call.id,
+                            "tool_call_id": tool_call["id"],
                             "name": tool_name,
                             "content": self._stringify(tool_result),
                         }
+                    litellm_messages.append(r)
+                    raw_r.append(r)
+                if raw_r:
+                    self._append_raw_message(
+                        raw_messages,
+                        kind="tool_message",
+                        message=raw_r,
                     )
-                    raw_messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "name": tool_name,
-                        "content": self._stringify(tool_result),
-                        "timestamp": time.perf_counter(),
-                    })  
         except Exception as e:
             status = "error"
             reason = str(e)
@@ -263,5 +284,19 @@ class Agent:
             return json.dumps(value, ensure_ascii=False)
         except Exception:
             return str(value)
+
+    def _append_raw_message(
+        self,
+        raw_messages: list[dict[str, Any]],
+        kind: str,
+        message: dict[str, Any],
+    ) -> None:
+        raw_messages.append(
+            {
+                "kind": kind,
+                "message": copy.deepcopy(message),
+                "timestamp": time.perf_counter(),
+            }
+        )
 
 

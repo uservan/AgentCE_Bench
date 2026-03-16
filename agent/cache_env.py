@@ -43,8 +43,8 @@ class CacheEnv:
         执行单个 task，拿到 messages，用 task.eval 打分，并把分数追加到 messages。
         """
         run_result: RunResult = agent.generate(task)
-        score = task.eval()
-        run_result.set_score(score)
+        result = task.eval()
+        run_result.set_result(result)
 
         return run_result
 
@@ -60,6 +60,9 @@ class CacheEnv:
         total_runs = self.get_total_runs()
         output_root = self._resolve_output_root(save_path)
         saved_paths: list[str] = []
+        numeric_scores: list[float] = []
+        usage_totals: dict[str, float] = {}
+        usage_counts: dict[str, int] = {}
         run_index = 0
         for dataset_obj in self.dataset_objects:
             for hidden_rate in self.hidden_rates:
@@ -102,6 +105,14 @@ class CacheEnv:
                             seed=seed,
                         )
                         saved_paths.append(saved_file_path)
+                        numeric_score = self._extract_numeric_score(run_result.score)
+                        if numeric_score is not None:
+                            numeric_scores.append(numeric_score)
+                        self._accumulate_usage(
+                            usage=run_result.usage,
+                            usage_totals=usage_totals,
+                            usage_counts=usage_counts,
+                        )
                         if progress_callback is not None:
                             progress_callback(
                                 {
@@ -116,11 +127,23 @@ class CacheEnv:
                                     "num_trials": self.num_trials,
                                     "seed": seed,
                                     "status": run_result.status,
-                                    "score": run_result.score,
+                                    "result": run_result.result,
                                     "save_path": saved_file_path,
                                 }
                             )
-        return saved_paths
+        average_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else None
+        average_usage = {
+            key: usage_totals[key] / usage_counts[key]
+            for key in usage_totals
+            if usage_counts.get(key)
+        }
+        return {
+            "saved_paths": saved_paths,
+            "average_score": average_score,
+            "average_usage": average_usage,
+            "scored_runs": len(numeric_scores),
+            "total_runs": total_runs,
+        }
 
     def _resolve_output_root(self, save_path: str) -> str:
         normalized_path = os.path.normpath(save_path)
@@ -139,8 +162,13 @@ class CacheEnv:
         trial_index: int,
         seed: int,
     ) -> str:
-        file_name = f"{hidden_rate}_{tool_failure_rate}_{trial_index}.json"
-        output_path = os.path.join(save_root, model_name, instance_id, file_name)
+        file_name = (
+            f"hidden-{hidden_rate}_"
+            f"fail-{tool_failure_rate}_"
+            f"trial-{trial_index}.json"
+        )
+        model_dir_name = self._get_model_dir_name(model_name)
+        output_path = os.path.join(save_root, model_dir_name, instance_id, file_name)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         payload = {
@@ -156,6 +184,10 @@ class CacheEnv:
             json.dump(payload, output_file, ensure_ascii=False, indent=2)
         return output_path
 
+    def _get_model_dir_name(self, model_name: str) -> str:
+        normalized = model_name.rstrip("/").split("/")
+        return normalized[-1] if normalized else model_name
+
     def _extract_numeric_score(self, score: Any) -> float | None:
         if isinstance(score, (int, float)):
             return float(score)
@@ -165,3 +197,14 @@ class CacheEnv:
                 if isinstance(value, (int, float)):
                     return float(value)
         return None
+
+    def _accumulate_usage(
+        self,
+        usage: dict[str, Any],
+        usage_totals: dict[str, float],
+        usage_counts: dict[str, int],
+    ) -> None:
+        for key, value in usage.items():
+            if isinstance(value, (int, float)):
+                usage_totals[key] = usage_totals.get(key, 0.0) + float(value)
+                usage_counts[key] = usage_counts.get(key, 0) + 1

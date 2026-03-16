@@ -14,6 +14,7 @@ class ShoppingToolsHandler(BaseToolsHandler):
         self.tools.update({
             "query_shopping_slot_candidates": self.query_shopping_slot_candidates,
             "get_shopping_item_info": self.get_shopping_item_info,
+            "get_shopping_item_attributes": self.get_shopping_item_attributes,
             "check_shopping_row_constraints": self.check_shopping_row_constraints,
             "check_shopping_col_constraints": self.check_shopping_col_constraints,
             "check_shopping_global_constraints": self.check_shopping_global_constraints,
@@ -27,12 +28,20 @@ class ShoppingToolsHandler(BaseToolsHandler):
         """
         return self._query_slot_candidates(row, col, summary_fields=["name", "category"])
 
-    def get_shopping_item_info(self, ids: list[str]) -> Messages:
-        """Return full shopping item information for up to three ids.
+    def get_shopping_item_info(self, id: str) -> Messages:
+        """Return full shopping item information for one id.
 
-        ids: List of shopping item ids as strings, with at most 3 items.
+        id: Shopping item id as a string.
         """
-        return self._get_item_info(ids, max_items=3)
+        return self._get_item_info(id)
+
+    def get_shopping_item_attributes(self, ids: list[str], field: str) -> Messages:
+        """Return one selected attribute value for up to five shopping item ids.
+
+        ids: List of shopping item ids as strings, with at most 5 items.
+        field: Attribute name to retrieve for each shopping item.
+        """
+        return self._get_item_attribute_values(ids, field, max_items=5)
 
     def check_shopping_row_constraints(self, row: int) -> Messages:
         """Check whether a row satisfies the shopping row constraints.

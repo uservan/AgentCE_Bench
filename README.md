@@ -88,3 +88,51 @@ python data_generation/generate.py --all-domains --num-instances 1 --rows 5 --co
 - `col_constraints` 是每一列的约束
 - `global_constraints` 是整张表的全局约束
 - `slots` 保存每个格子的局部约束、真值 id、候选 id 列表，以及便于调试的 `valid_candidate_ids`
+
+## Benchmark Eval
+
+评测入口在 `main.py`，可以直接用命令行运行。
+
+例如，使用本地 vLLM 对 `course` 领域做一次最小评测：
+
+```bash
+OPENAI_API_KEY=EMPTY python main.py \
+  --model openai/Qwen/Qwen3-8B \
+  --domain course \
+  --agent-params '{"api_base":"http://localhost:8001/v1","temperature":0.6}' \
+  --hidden-rates 0.1 \
+  --max-steps 200 \
+  --tool-failure-rates "[0.0]" \
+  --num-trials 1 \
+  --save-path results/ \
+  --seed 42
+```
+
+这条命令对应 `debug.py` 里的示例配置，含义是：
+
+- 使用模型 `openai/Qwen/Qwen3-8B`
+- 只评测 `course` 领域
+- 连接本地 `http://localhost:8001/v1`
+- 只跑 `hidden_rate=0.1`
+- 每个 task 最多执行 `200` 步
+- tool 失败率为 `0.0`
+- 每个实例只跑 `1` 次
+- 结果保存到 `results/`
+
+如果想一次评测全部领域，可以这样运行：
+
+```bash
+OPENAI_API_KEY=EMPTY python main.py \
+  --model openai/Qwen/Qwen3-8B \
+  --domain all \
+  --agent-params '{"api_base":"http://localhost:8001/v1","temperature":0.6}' \
+  --hidden-rates 0.1 0.3 0.5 0.7 0.9 \
+  --tool-failure-rates "[0.0]" \
+  --num-trials 1 \
+  --save-path results/ \
+  --seed 42
+```
+
+结果会按如下结构保存：
+
+- `results/<model-last-name>/<instance_id>/hidden-<hidden_rate>_fail-<tool_failure_rate>_trial-<trial_index>.json`

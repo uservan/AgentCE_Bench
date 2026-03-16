@@ -1,3 +1,4 @@
+import json
 from typing import Any, Callable
 
 from agent.task import Task
@@ -17,7 +18,7 @@ class BaseToolsHandler:
     def __init__(self):
         self.tools: dict[str, Callable[..., Any]] = {
             "set_slot": self.set_slot,
-            "check_all_slots": self.check_all_slots,
+            "get_current_grid_state": self.get_current_grid_state,
             "get_slot_id": self.get_slot_id,
             "done": self.done,
         }
@@ -58,6 +59,31 @@ class BaseToolsHandler:
         if task is None:
             return None, Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
         return task.dataset_object, None
+
+    def _parse_string_list_argument(
+        self,
+        value: Any,
+        argument_name: str,
+    ) -> tuple[list[str] | None, Messages | None]:
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                return None, Messages.build_failure_message(
+                    ErrorType.INVALID_ARGUMENTS,
+                    f"{argument_name} string must be a valid JSON list",
+                )
+        if not isinstance(value, list):
+            return None, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"{argument_name} must be a list",
+            )
+        if any(not isinstance(item, str) for item in value):
+            return None, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"each element in {argument_name} must be a string",
+            )
+        return value, None
 
     def _get_slot(self, row: int, col: int) -> tuple[Any | None, dict[str, Any] | None, Messages | None]:
         dataset, error = self._get_current_dataset()
@@ -104,30 +130,59 @@ class BaseToolsHandler:
             "missing_candidate_ids": missing_candidate_ids,
         })
 
-    def _get_item_info(self, ids: list[str], max_items: int = 3) -> Messages:
+    def _get_item_info(self, id: str) -> Messages:
         dataset, error = self._get_current_dataset()
         if error is not None:
             return error
-        if not isinstance(ids, list):
-            return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "ids must be a list")
-        if len(ids) > max_items:
+        if not isinstance(id, str):
+            return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "id must be a string")
+        item = dataset.item_pool.get(id)
+        if item is None:
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"Unknown item id: {id}",
+            )
+        return Messages.build_success_message({
+            "id": id,
+            "item": item,
+        })
+
+    def _get_item_attribute_values(
+        self,
+        ids: list[str] | str,
+        field: str,
+        max_items: int = 5,
+    ) -> Messages:
+        dataset, error = self._get_current_dataset()
+        if error is not None:
+            return error
+
+        parsed_ids, ids_error = self._parse_string_list_argument(ids, "ids")
+        if ids_error is not None:
+            return ids_error
+        if len(parsed_ids) > max_items:
             return Messages.build_failure_message(
                 ErrorType.INVALID_ARGUMENTS,
                 f"ids can contain at most {max_items} items",
             )
+        if not isinstance(field, str) or not field.strip():
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "field must be a non-empty string",
+            )
+        normalized_field = field.strip()
 
         items = {}
         missing_ids = []
-        for item_id in ids:
-            if not isinstance(item_id, str):
-                return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "each id must be a string")
+        for item_id in parsed_ids:
             item = dataset.item_pool.get(item_id)
             if item is None:
                 missing_ids.append(item_id)
                 continue
-            items[item_id] = item
+            items[item_id] = item.get(normalized_field)
 
         return Messages.build_success_message({
+            "field": normalized_field,
             "items": items,
             "missing_ids": missing_ids,
         })
@@ -237,7 +292,7 @@ class BaseToolsHandler:
             solution[row][col] = None
         return Messages.build_success_message({"row": row, "col": col, "id": solution[row][col]})
 
-    def check_all_slots(self) -> Messages:
+    def get_current_grid_state(self) -> Messages:
         """Return the full current grid state."""
         task = self.current_task
         if task is None:
