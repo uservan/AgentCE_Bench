@@ -1,7 +1,7 @@
 def build_constraint_maps(dataset):
     slot_map = {(slot["row"], slot["col"]): slot for slot in dataset["slots"]}
-    row_map = {constraint["row"]: constraint for constraint in dataset["row_constraints"]}
-    col_map = {constraint["col"]: constraint for constraint in dataset["col_constraints"]}
+    row_map = {constraint["row"]: constraint for constraint in dataset.get("row_constraints", [])}
+    col_map = {constraint["col"]: constraint for constraint in dataset.get("col_constraints", [])}
     return slot_map, row_map, col_map
 
 

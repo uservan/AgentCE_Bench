@@ -15,11 +15,11 @@ DOMAIN_AGENT_INTROS = {
 
 DOMAIN_ITEM_ATTRIBUTES = {
     "course": ["name", "category", "difficulty", "credits", "price", "teacher", "workload"],
-    "shopping": ["name", "category", "price", "calories", "protein", "brand"],
-    "travel": ["name", "category", "cost", "duration", "crowd_level", "location"],
-    "workforce": ["name", "hourly_cost", "skill", "experience", "department", "reliability"],
-    "meal": ["name", "calories", "protein", "price", "cuisine"],
-    "pc_build": ["name", "category", "price", "performance", "power", "brand"],
+    "shopping": ["name", "category", "price", "calories", "protein", "brand", "weight"],
+    "travel": ["name", "category", "cost", "duration", "crowd_level", "location", "rating"],
+    "workforce": ["name", "hourly_cost", "skill", "experience", "department", "reliability", "overtime_capacity"],
+    "meal": ["name", "calories", "protein", "price", "cuisine", "chef", "spiciness"],
+    "pc_build": ["name", "category", "price", "performance", "power", "brand", "compatibility"],
 }
 
 BENCHMARK_SYSTEM_PROMPT = """
@@ -40,6 +40,8 @@ BENCHMARK_SYSTEM_PROMPT = """
 
 def build_initial_messages(task: Any) -> list[dict[str, Any]]:
     """为 benchmark task 构建初始消息。"""
+    current_target_tool = "get_current_target_slot"
+    previous_target_tool = "get_previous_target_slot"
     system_content = BENCHMARK_SYSTEM_PROMPT.format(
         agent_instruction=build_agent_instruction(task),
         tool_usage=build_tool_usage_instruction(task),
@@ -53,7 +55,9 @@ def build_initial_messages(task: Any) -> list[dict[str, Any]]:
     user_content = (
         "Here is the current partial solution grid.\n"
         "Each `null` value is a missing slot that still needs a valid item id.\n\n"
-        f"{partial_repr}"
+        f"{partial_repr}\n\n"
+        "You must follow the hidden-slot path in order.\nOnly the current target hidden slot may be queried, checked, or filled next. "
+        "To roll back, you may clear the immediately previous hidden slot with `set_slot`."
     )
     return [
         {"role": "system", "content": system_content},
@@ -75,8 +79,9 @@ def build_agent_instruction(task: Any) -> str:
             "Follow the task policy exactly.",
             f"Each item in this domain has attributes such as: {item_attributes_text}.",
             "Use tools to inspect the current grid, reason about candidate ids, and update slots.",
+            "Work through the hidden slots strictly in path order. Focus on one hidden slot at a time, gather evidence for that slot, place a candidate, validate it, and only then move to the next hidden slot in the path.",
             "Assume all pre-filled non-null slots are already correct, valid, and fixed.",
-            "You must make sure the final solution satisfies the global constraints, every row constraints, and every column constraints.",
+            "You must make sure the final solution satisfies every hidden-slot constraint and the global constraints.",
             "Never change pre-filled non-null slots unless a tool result or task policy clearly requires it.",
             "Your goal is to produce a fully filled grid that satisfies all constraints.",
         ]
@@ -84,13 +89,19 @@ def build_agent_instruction(task: Any) -> str:
 
 
 def build_tool_usage_instruction(task: Any) -> str:
+    domain = getattr(task.dataset_object, "domain", "course")
+    multi_attr_tool = f"get_{domain}_item_attributes"
+    slot_tool = f"check_{domain}_slot_constraints"
+    global_tool = f"check_{domain}_global_constraints"
+    current_target_tool = "get_current_target_slot"
+    previous_target_tool = "get_previous_target_slot"
+    max_query_ids = getattr(task, "max_query_ids", 5)
+    max_query_fields = getattr(task, "max_query_fields", 6)
     guidance_lines = [
         "Use the available tools instead of pretending to know hidden slot values.",
-        "Use `set_slot` to fill or clear a slot in the grid.",
-        "Use the single-item info tool when you need all attributes for one item id.",
-        "Use the multi-item attribute tool when you want one selected attribute for up to 5 item ids at once.",
-        "Before finishing, explicitly check row constraints, column constraints, and global constraints with the available checking tools.",
-        "Use the available query or checking tools when you need to inspect the current state or validate progress.",
+        f"Follow the hidden-slot path in order and complete the hidden slots one by one. Use `{current_target_tool}` to get the current hidden slot position, use `{previous_target_tool}` to get the previous hidden slot position when needed, and use `set_slot` to update the current hidden slot or clear the immediately previous hidden slot.",
+        f"Each hidden slot has multiple options. Your choice for each slot must satisfy the corresponding slot constraints, and the completed grid must satisfy the global constraints. Use `{slot_tool}` when needed for any filled hidden slot, and use `{global_tool}` after all slots are filled.",
+        f"Use the single-item info tool when you need all attributes for one item id. Use `{multi_attr_tool}` when you want up to {max_query_fields} selected attributes for up to {max_query_ids} item ids at once.",
         f"When the grid is complete and you are satisfied with the result, call `{STOP_FUNCTION_NAME}`.",
         f"Your final action must be a single call to `{STOP_FUNCTION_NAME}` with no other tool calls in that message.",
     ]

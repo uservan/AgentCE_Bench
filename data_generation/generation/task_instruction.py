@@ -57,70 +57,55 @@ DOMAIN_TASK_INSTRUCTIONS = {
     "course": (
         "You are solving a course scheduling task. Fill the {rows}x{cols} grid with course ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, but those slot-specific limits must be "
-        "looked up from the dataset/database for that slot before deciding which candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of course ids."
     ),
     "shopping": (
         "You are solving a grocery shopping task. Fill the {rows}x{cols} grid with product ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, but those slot-specific limits must be "
-        "looked up from the dataset/database for that slot before deciding which candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of product ids."
     ),
     "travel": (
         "You are solving a travel itinerary task. Fill the {rows}x{cols} grid with activity ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, but those slot-specific limits must be "
-        "looked up from the dataset/database for that slot before deciding which candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of activity ids."
     ),
     "workforce": (
         "You are solving a workforce scheduling task. Fill the {rows}x{cols} grid with worker ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, but those slot-specific "
-        "limits must be looked up from the dataset/database for that slot before deciding which "
-        "candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of worker ids."
     ),
     "meal": (
         "You are solving a meal planning task. Fill the {rows}x{cols} grid with dish ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, "
-        "but those slot-specific limits must be looked up from the dataset/database for that slot "
-        "before deciding which candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of dish ids."
     ),
     "pc_build": (
         "You are solving a PC build configuration task. Fill the {rows}x{cols} grid with component ids.\n"
         "{grid_description}\n"
+        "Only the empty (`null`) slots need to be filled. All other non-empty slots are already fixed and must not be changed.\n"
         "Each cell must use exactly one candidate id from that slot.\n\n"
         "{global_constraints_text}\n\n"
-        "{row_constraints_text}\n\n"
-        "{col_constraints_text}\n\n"
-        "Each slot also has its own local constraints, "
-        "but those slot-specific limits must be looked up from the dataset/database for that slot "
-        "before deciding which candidate id to use.\n"
+        "{slot_constraints_text}\n\n"
         "Return only a {rows}x{cols} list of component ids."
     ),
 }
@@ -184,8 +169,7 @@ def get_task_instruction(
     cols=None,
     grid_description=None,
     global_constraints_text=None,
-    row_constraints_text=None,
-    col_constraints_text=None,
+    slot_constraints_text=None,
 ):
     if domain not in DOMAIN_TASK_INSTRUCTIONS:
         raise KeyError(f"Unsupported domain for task instruction: {domain}")
@@ -194,8 +178,7 @@ def get_task_instruction(
         or cols is None
         or grid_description is None
         or global_constraints_text is None
-        or row_constraints_text is None
-        or col_constraints_text is None
+        or slot_constraints_text is None
     ):
         return DOMAIN_TASK_INSTRUCTIONS[domain]
     return DOMAIN_TASK_INSTRUCTIONS[domain].format(
@@ -203,8 +186,7 @@ def get_task_instruction(
         cols=cols,
         grid_description=grid_description,
         global_constraints_text=global_constraints_text,
-        row_constraints_text=row_constraints_text,
-        col_constraints_text=col_constraints_text,
+        slot_constraints_text=slot_constraints_text,
     )
 
 
@@ -257,36 +239,30 @@ def _format_global_constraints(domain, global_constraints):
     return "Across the whole grid, the plan must satisfy these global constraints:\n" + _numbered_rule_texts(rule_texts)
 
 
-def _format_row_constraints(domain, row_constraints, row_label):
-    parts = []
-    for constraint in row_constraints:
-        row_index = constraint["row"]
-        rule_texts = []
-        for rule in DOMAIN_SPECS[domain]["row_rules"]:
-            if rule["name"] not in constraint:
-                continue
-            rule_texts.append(_format_rule_text(domain, rule, constraint[rule["name"]], f"{row_label} {row_index}"))
-        if rule_texts:
-            parts.append(f"For {row_label} {row_index}:\n{_numbered_rule_texts(rule_texts)}")
-    if not parts:
-        return "There are no active row constraints."
-    return "For the row constraints:\n" + "\n\n".join(parts)
+def _format_slot_rule_text(domain, rule, value, scope_text):
+    item_singular, _ = DOMAIN_ITEM_LABELS[domain]
+    label = _label_for_attr(rule["attr"])
+    if rule["kind"] == "max":
+        return f"the {item_singular} in {scope_text} must have {label} at most {value}"
+    return f"the {item_singular} in {scope_text} must have {label} at least {value}"
 
 
-def _format_col_constraints(domain, col_constraints, col_label):
+def _format_slot_constraints(domain, slots):
     parts = []
-    for constraint in col_constraints:
-        col_index = constraint["col"]
+    for slot in slots:
+        constraint = slot["slot_constraints"]
         rule_texts = []
-        for rule in DOMAIN_SPECS[domain]["col_rules"]:
+        for rule in DOMAIN_SPECS[domain]["slot_rules"]:
             if rule["name"] not in constraint:
                 continue
-            rule_texts.append(_format_rule_text(domain, rule, constraint[rule["name"]], f"{col_label} {col_index}"))
+            if rule["name"] not in constraint.get("active_rule_names", []):
+                continue
+            rule_texts.append(_format_slot_rule_text(domain, rule, constraint[rule["name"]], f"slot ({slot['row']}, {slot['col']})"))
         if rule_texts:
-            parts.append(f"For {col_label} {col_index}:\n{_numbered_rule_texts(rule_texts)}")
+            parts.append(f"For slot ({slot['row']}, {slot['col']}):\n{_numbered_rule_texts(rule_texts)}")
     if not parts:
-        return "There are no active column constraints."
-    return "For the column constraints:\n" + "\n\n".join(parts)
+        return "There are no active slot constraints."
+    return "For the hidden-slot constraints:\n" + "\n\n".join(parts)
 
 
 def build_task_instruction_from_instance(instance):
@@ -299,6 +275,5 @@ def build_task_instruction_from_instance(instance):
         cols=cols,
         grid_description=grid_description["intro"],
         global_constraints_text=_format_global_constraints(domain, instance["global_constraints"]),
-        row_constraints_text=_format_row_constraints(domain, instance["row_constraints"], grid_description["row_label"]),
-        col_constraints_text=_format_col_constraints(domain, instance["col_constraints"], grid_description["col_label"]),
+        slot_constraints_text=_format_slot_constraints(domain, instance["slots"]),
     )

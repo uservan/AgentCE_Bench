@@ -18,6 +18,9 @@ class SavedDatasetObject:
     instance_id: str
     meta: dict
     global_constraints: dict
+    partial_solution: list
+    hidden_slots: list
+    branch_budget_allocations: list
     row_constraints: list
     col_constraints: list
     item_pool: dict
@@ -27,14 +30,49 @@ class SavedDatasetObject:
     source_path: str
     source_filename: str
 
+    @property
+    def rows(self) -> int | None:
+        return self.meta.get("rows")
+
+    @property
+    def cols(self) -> int | None:
+        return self.meta.get("cols")
+
+    @property
+    def hidden_slot_count(self) -> int | None:
+        return self.meta.get("hidden_slots")
+
+    @property
+    def branch_budget(self) -> int | None:
+        return self.meta.get("branch_budget")
+
+    @property
+    def branch_slot_count(self) -> int | None:
+        return self.meta.get("branch_slot_count")
+
+    @property
+    def branch_budget_allocations_meta(self) -> list:
+        return self.meta.get("branch_budget_allocations", self.branch_budget_allocations)
+
+    @property
+    def candidates_per_slot(self) -> int | None:
+        return self.meta.get("candidates_per_slot")
+
+    @property
+    def requested_candidates_per_slot(self) -> int | None:
+        return self.meta.get("requested_candidates_per_slot", self.meta.get("candidates_per_slot"))
+
 def _build_dataset_object(instance, source_path):
     return SavedDatasetObject(
         domain=instance["domain"],
         instance_id=instance["instance_id"],
         meta=instance["meta"],
         global_constraints=instance["global_constraints"],
-        row_constraints=instance["row_constraints"],
-        col_constraints=instance["col_constraints"],
+        partial_solution=instance.get("partial_solution", []),
+        hidden_slots=instance.get("hidden_slots", []),
+        branch_budget_allocations=instance.get("meta", {}).get("branch_budget_allocations", []),
+        row_constraints=instance.get("row_constraints", []),
+        col_constraints=instance.get("col_constraints", []),
         item_pool=instance["item_pool"],
         truth_solution=instance["truth_solution"],
         slots=instance["slots"],
@@ -121,8 +159,11 @@ if __name__ == "__main__":
                 ("Domain", sample.domain),
                 ("Instance", sample.instance_id),
                 ("Source File", sample.source_filename),
-                ("Rows", sample.meta.get("rows")),
-                ("Cols", sample.meta.get("cols")),
+                ("Rows", sample.rows),
+                ("Cols", sample.cols),
+                ("Hidden Slots", sample.hidden_slot_count),
+                ("Branch Budget", sample.branch_budget),
+                ("Branch Allocations", sample.branch_budget_allocations_meta),
             ],
             border_style="cyan",
         )

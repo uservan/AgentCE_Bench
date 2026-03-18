@@ -14,13 +14,24 @@ def validate_scope_constraints(
     rule_specs,
     item_pool,
     slot_map,
+    truth_solution=None,
     unknown_id_scope,
     scope_text,
 ):
     for row_index, col_index, item_id in positions:
         if item_id is None:
             continue
-        if item_id not in slot_map[(row_index, col_index)]["candidate_ids"]:
+        slot_entry = slot_map.get((row_index, col_index))
+        if slot_entry is None:
+            if truth_solution is None:
+                allowed_ids = [item_id]
+            else:
+                allowed_ids = [truth_solution[row_index][col_index]]
+        else:
+            allowed_ids = slot_entry.get("candidate_ids")
+            if allowed_ids is None:
+                allowed_ids = [slot_entry["truth_id"]]
+        if item_id not in allowed_ids:
             return False, (
                 f"slot ({row_index}, {col_index}) contains id '{item_id}', "
                 "which is not one of the candidate options for that slot"

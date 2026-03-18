@@ -4,11 +4,11 @@ import random
 
 from agent.agent import Agent
 from agent.cache_env import CacheEnv
+from agent.task import DEFAULT_MAX_QUERY_FIELDS, DEFAULT_MAX_QUERY_IDS
 from load_datasets.loader import DEFAULT_DATA_DIR, load_all_dataset_objects
 from utils.console_display import ConsoleDisplay
 
 
-HIDDEN_RATE_CHOICES = [0.1, 0.3, 0.5, 0.7, 0.9]
 DOMAIN_CHOICES = ["course", "shopping", "travel", "workforce", "meal", "pc_build"]
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_SEED = 42
@@ -18,6 +18,7 @@ DEFAULT_TOOL_FAILURE_RATES = "[0.0]"
 DEFAULT_NUM_TRIALS = 1
 DEFAULT_TOOLS_DOMAIN_ONLY = True
 DEFAULT_SAVE_PATH = "output.json"
+DEFAULT_OVERWRITE_RESULTS = False
 DEFAULT_DOMAIN = ["all"]
 DEFAULT_DOMAIN_FALLBACK = ["course"]
 
@@ -41,6 +42,226 @@ def set_seed(seed: int) -> None:
     random.seed(seed)
 
 
+def main(
+    model,
+    domain,
+    data_dir=None,
+    agent_params=None,
+    max_steps=DEFAULT_MAX_STEPS,
+    tool_failure_rates=None,
+    num_trials=DEFAULT_NUM_TRIALS,
+    tools_domain_only=DEFAULT_TOOLS_DOMAIN_ONLY,
+    save_path=DEFAULT_SAVE_PATH,
+    max_query_ids=DEFAULT_MAX_QUERY_IDS,
+    max_query_fields=DEFAULT_MAX_QUERY_FIELDS,
+    overwrite_results=DEFAULT_OVERWRITE_RESULTS,
+    hidden_slots=None,
+    branch_budget=None,
+    seed=DEFAULT_SEED,
+):
+    """
+    组装 dataset、agent、cache env，并执行完整流程。
+    """
+    set_seed(seed)
+    data_dir = data_dir or DEFAULT_DATA_DIR
+    all_objects = load_all_dataset_objects(data_dir=data_dir)
+    dataset_objects = [obj for obj in all_objects if obj.domain in domain]
+    if hidden_slots is not None and len(hidden_slots) > 0:
+        hidden_set = set(hidden_slots)
+        dataset_objects = [
+            obj for obj in dataset_objects
+            if obj.hidden_slot_count is not None and obj.hidden_slot_count in hidden_set
+        ]
+    if branch_budget is not None and len(branch_budget) > 0:
+        budget_set = set(branch_budget)
+        dataset_objects = [
+            obj for obj in dataset_objects
+            if obj.branch_budget is not None and obj.branch_budget in budget_set
+        ]
+    if not dataset_objects:
+        raise ValueError(f"No dataset objects found for domains: {domain}")
+    if max_query_ids <= 0:
+        raise ValueError("max_query_ids must be positive")
+    if max_query_fields <= 0:
+        raise ValueError("max_query_fields must be positive")
+
+    ConsoleDisplay.print_kv_panel(
+        title="[bold green]Benchmark Run Configuration[/bold green]",
+        items=[
+            ("Model", model),
+            ("Data Dir", data_dir),
+            ("Domains", ", ".join(domain)),
+            ("Tool Failure Rates", tool_failure_rates or [0.0]),
+            ("Num Trials", num_trials),
+            ("Max Steps", max_steps),
+            ("Tools Domain Only", tools_domain_only),
+            ("Max Query IDs", max_query_ids),
+            ("Max Query Fields", max_query_fields),
+            ("Overwrite Results", overwrite_results),
+            ("Hidden Slots Filter", str(hidden_slots) if hidden_slots else "-"),
+            ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
+            ("Save Path", save_path),
+            ("Seed", seed),
+            ("Dataset Objects", len(dataset_objects)),
+        ],
+        border_style="green",
+    )
+
+    ConsoleDisplay.print_table(
+        title="Selected dataset objects",
+        headers=("Domain", "Instance ID", "Rows", "Cols", "Hidden Slots", "Branch Budget", "Branch Allocations"),
+        rows=[
+            (
+                obj.domain,
+                obj.instance_id,
+                obj.rows,
+                obj.cols,
+                obj.hidden_slot_count,
+                obj.branch_budget,
+                str(obj.branch_budget_allocations_meta),
+            )
+            for obj in dataset_objects
+        ],
+        panel_title="[bold blue]Datasets To Run[/bold blue]",
+        border_style="blue",
+    )
+
+    cache_env = CacheEnv(
+        dataset_objects=dataset_objects,
+        max_steps=max_steps,
+        tool_failure_rates=tool_failure_rates or [0.0],
+        num_trials=num_trials,
+        tools_domain_only=tools_domain_only,
+        max_query_ids=max_query_ids,
+        max_query_fields=max_query_fields,
+        overwrite_results=overwrite_results,
+        seed=seed,
+    )
+    agent = Agent(model=model, **(agent_params or {}))
+    total_runs = cache_env.get_total_runs()
+
+    ConsoleDisplay.print_kv_panel(
+        title="[bold yellow]Benchmark Execution[/bold yellow]",
+        items=[
+            ("Stage", "Starting benchmark tasks"),
+            ("Total Runs", total_runs),
+            ("Datasets", len(dataset_objects)),
+            ("Max Query IDs", max_query_ids),
+            ("Max Query Fields", max_query_fields),
+            ("Overwrite Results", overwrite_results),
+            ("Hidden Slots Filter", str(hidden_slots) if hidden_slots else "-"),
+            ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
+            ("Save Path", save_path),
+        ],
+        border_style="yellow",
+    )
+
+    is_interactive_terminal = bool(getattr(ConsoleDisplay.console, "is_terminal", False))
+
+    with ConsoleDisplay.create_progress() as progress:
+        task_id = progress.add_task("Running benchmark tasks", total=total_runs)
+
+        def on_progress(event: dict[str, object]) -> None:
+            run_index = event.get("run_index", "-")
+            total_runs_display = event.get("total_runs", total_runs)
+            description = (
+                f"[{run_index}/{total_runs_display}] "
+                "Running "
+                f"{event.get('domain', '-')}/"
+                f"{event.get('instance_id', '-')}"
+                f" | fail={event.get('tool_failure_rate', '-')}"
+                f" | trial={event.get('trial_index', '-')}/{event.get('num_trials', '-')}"
+            )
+            if event.get("stage") == "start":
+                progress.update(task_id, description=description)
+                if not is_interactive_terminal:
+                    ConsoleDisplay.console.print(description)
+                return
+            if event.get("stage") == "cached":
+                progress.update(
+                    task_id,
+                    advance=1,
+                    description=f"{description} | cached",
+                )
+                if not is_interactive_terminal:
+                    ConsoleDisplay.console.print(f"{description} | cached")
+                return
+            progress.update(
+                task_id,
+                advance=1,
+                description=description,
+            )
+            if not is_interactive_terminal:
+                status = event.get("status", "-")
+                ConsoleDisplay.console.print(f"{description} | status={status}")
+
+        result = cache_env.run(agent=agent, save_path=save_path, progress_callback=on_progress)
+        progress.update(task_id, completed=total_runs, description="Benchmark tasks completed")
+
+    average_score = result.get("average_score") if isinstance(result, dict) else None
+    average_usage = result.get("average_usage", {}) if isinstance(result, dict) else {}
+    average_score_display = (
+        f"{average_score:.4f}" if isinstance(average_score, (int, float)) else "-"
+    )
+    average_prompt_tokens = average_usage.get("prompt_tokens")
+    average_completion_tokens = average_usage.get("completion_tokens")
+    average_total_tokens = average_usage.get("total_tokens")
+    average_cost = average_usage.get("cost")
+    average_time = average_usage.get("time")
+    average_tool_calls = average_usage.get("tool_calls_num")
+    average_step_num = average_usage.get("step_num")
+    summary = {
+        "model": model,
+        "domains": domain,
+        "dataset_objects": len(dataset_objects),
+        "total_runs": total_runs,
+        "average_score": average_score,
+        "average_prompt_tokens": average_prompt_tokens,
+        "average_completion_tokens": average_completion_tokens,
+        "average_total_tokens": average_total_tokens,
+        "average_tool_calls": average_tool_calls,
+        "average_step_num": average_step_num,
+        "average_time_seconds": average_time,
+        "average_cost": average_cost,
+        "max_query_ids": max_query_ids,
+        "max_query_fields": max_query_fields,
+        "overwrite_results": overwrite_results,
+        "hidden_slots": hidden_slots,
+        "branch_budget": branch_budget,
+        "save_path": save_path,
+        "status": "Completed",
+    }
+    if isinstance(result, dict):
+        result["summary"] = summary
+
+    ConsoleDisplay.print_kv_panel(
+        title="[bold green]Benchmark Run Finished[/bold green]",
+        items=[
+            ("Model", model),
+            ("Domains", ", ".join(domain)),
+            ("Dataset Objects", len(dataset_objects)),
+            ("Total Runs", total_runs),
+            ("Average Score", average_score_display),
+            ("Avg Prompt Tokens", f"{average_prompt_tokens:.2f}" if isinstance(average_prompt_tokens, (int, float)) else "-"),
+            ("Avg Completion Tokens", f"{average_completion_tokens:.2f}" if isinstance(average_completion_tokens, (int, float)) else "-"),
+            ("Avg Total Tokens", f"{average_total_tokens:.2f}" if isinstance(average_total_tokens, (int, float)) else "-"),
+            ("Avg Tool Calls", f"{average_tool_calls:.2f}" if isinstance(average_tool_calls, (int, float)) else "-"),
+            ("Avg Steps", f"{average_step_num:.2f}" if isinstance(average_step_num, (int, float)) else "-"),
+            ("Avg Time (s)", f"{average_time:.2f}" if isinstance(average_time, (int, float)) else "-"),
+            ("Avg Cost", f"{average_cost:.6f}" if isinstance(average_cost, (int, float)) else "-"),
+            ("Max Query IDs", max_query_ids),
+            ("Max Query Fields", max_query_fields),
+            ("Overwrite Results", overwrite_results),
+            ("Cached Runs", result.get("cached_runs", 0) if isinstance(result, dict) else 0),
+            ("Hidden Slots Filter", str(hidden_slots) if hidden_slots else "-"),
+            ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
+            ("Save Path", save_path),
+            ("Status", "[green]Completed[/green]"),
+        ],
+        border_style="green",
+    )
+    return result
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=DEFAULT_MODEL, help="模型名称")
@@ -60,14 +281,6 @@ def parse_args():
         choices=DOMAIN_CHOICES + ["all"],
         default=DEFAULT_DOMAIN,
         help=f"领域列表，可多选: {', '.join(DOMAIN_CHOICES)}，或 all 表示全部领域",
-    )
-    parser.add_argument(
-        "--hidden-rates",
-        nargs="+",
-        type=float,
-        choices=HIDDEN_RATE_CHOICES,
-        default=HIDDEN_RATE_CHOICES,
-        help=f"隐藏率列表，可选: {HIDDEN_RATE_CHOICES}",
     )
     parser.add_argument(
         "--max-steps",
@@ -100,168 +313,45 @@ def parse_args():
         help="结果 JSON 输出路径",
     )
     parser.add_argument(
+        "--overwrite-results",
+        action="store_true",
+        default=DEFAULT_OVERWRITE_RESULTS,
+        help="若指定，则覆盖已存在的结果文件；否则会优先复用已有结果",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=DEFAULT_SEED,
         help="随机种子",
     )
+    parser.add_argument(
+        "--max-query-ids",
+        type=int,
+        default=DEFAULT_MAX_QUERY_IDS,
+        help="多 item 属性查询工具一次最多允许查询的 item id 数量",
+    )
+    parser.add_argument(
+        "--max-query-fields",
+        type=int,
+        default=DEFAULT_MAX_QUERY_FIELDS,
+        help="多 item 属性查询工具一次最多允许查询的属性数量",
+    )
+    parser.add_argument(
+        "--hidden-slots",
+        type=int,
+        nargs="*",
+        default=None,
+        help="仅测试 hidden_slots 在该列表内的数据集；不传则不过滤",
+    )
+    parser.add_argument(
+        "--branch-budget",
+        type=int,
+        nargs="*",
+        default=None,
+        help="仅测试 branch_budget 在该列表内的数据集；不传则不过滤",
+    )
     return parser.parse_args()
 
-
-def main(
-    model,
-    domain,
-    data_dir=None,
-    agent_params=None,
-    hidden_rates=None,
-    max_steps=DEFAULT_MAX_STEPS,
-    tool_failure_rates=None,
-    num_trials=DEFAULT_NUM_TRIALS,
-    tools_domain_only=DEFAULT_TOOLS_DOMAIN_ONLY,
-    save_path=DEFAULT_SAVE_PATH,
-    seed=DEFAULT_SEED,
-):
-    """
-    组装 dataset、agent、cache env，并执行完整流程。
-    """
-    set_seed(seed)
-    data_dir = data_dir or DEFAULT_DATA_DIR
-    all_objects = load_all_dataset_objects(data_dir=data_dir)
-    dataset_objects = [obj for obj in all_objects if obj.domain in domain]
-    if not dataset_objects:
-        raise ValueError(f"No dataset objects found for domains: {domain}")
-
-    ConsoleDisplay.print_kv_panel(
-        title="[bold green]Benchmark Run Configuration[/bold green]",
-        items=[
-            ("Model", model),
-            ("Data Dir", data_dir),
-            ("Domains", ", ".join(domain)),
-            ("Hidden Rates", hidden_rates if hidden_rates is not None else HIDDEN_RATE_CHOICES),
-            ("Tool Failure Rates", tool_failure_rates or [0.0]),
-            ("Num Trials", num_trials),
-            ("Max Steps", max_steps),
-            ("Tools Domain Only", tools_domain_only),
-            ("Save Path", save_path),
-            ("Seed", seed),
-            ("Dataset Objects", len(dataset_objects)),
-        ],
-        border_style="green",
-    )
-
-    ConsoleDisplay.print_table(
-        title="Selected dataset objects",
-        headers=("Domain", "Instance ID", "Source File", "Rows", "Cols"),
-        rows=[
-            (
-                obj.domain,
-                obj.instance_id,
-                obj.source_filename,
-                obj.meta.get("rows"),
-                obj.meta.get("cols"),
-            )
-            for obj in dataset_objects
-        ],
-        panel_title="[bold blue]Datasets To Run[/bold blue]",
-        border_style="blue",
-    )
-
-    cache_env = CacheEnv(
-        dataset_objects=dataset_objects,
-        max_steps=max_steps,
-        tool_failure_rates=tool_failure_rates or [0.0],
-        num_trials=num_trials,
-        tools_domain_only=tools_domain_only,
-        seed=seed,
-        hidden_rates=hidden_rates,
-    )
-    agent = Agent(model=model, **(agent_params or {}))
-    total_runs = cache_env.get_total_runs()
-
-    ConsoleDisplay.print_kv_panel(
-        title="[bold yellow]Benchmark Execution[/bold yellow]",
-        items=[
-            ("Stage", "Starting benchmark tasks"),
-            ("Total Runs", total_runs),
-            ("Datasets", len(dataset_objects)),
-            ("Save Path", save_path),
-        ],
-        border_style="yellow",
-    )
-
-    with ConsoleDisplay.create_progress() as progress:
-        task_id = progress.add_task("Running benchmark tasks", total=total_runs)
-        
-        def on_progress(event: dict[str, object]) -> None:
-            description = (
-                "Running "
-                f"{event.get('domain', '-')}/"
-                f"{event.get('instance_id', '-')}"
-                f" | hidden={event.get('hidden_rate', '-')}"
-                f" | fail={event.get('tool_failure_rate', '-')}"
-                f" | trial={event.get('trial_index', '-')}/{event.get('num_trials', '-')}"
-            )
-            if event.get("stage") == "start":
-                progress.update(task_id, description=description)
-                return
-            progress.update(
-                task_id,
-                advance=1,
-                description=description,
-            )
-
-        result = cache_env.run(agent=agent, save_path=save_path, progress_callback=on_progress)
-        progress.update(task_id, completed=total_runs, description="Benchmark tasks completed")
-
-    average_score = result.get("average_score") if isinstance(result, dict) else None
-    average_usage = result.get("average_usage", {}) if isinstance(result, dict) else {}
-    average_score_display = (
-        f"{average_score:.4f}" if isinstance(average_score, (int, float)) else "-"
-    )
-    average_prompt_tokens = average_usage.get("prompt_tokens")
-    average_completion_tokens = average_usage.get("completion_tokens")
-    average_total_tokens = average_usage.get("total_tokens")
-    average_cost = average_usage.get("cost")
-    average_time = average_usage.get("time")
-    average_tool_calls = average_usage.get("tool_calls_num")
-    summary = {
-        "model": model,
-        "domains": domain,
-        "dataset_objects": len(dataset_objects),
-        "total_runs": total_runs,
-        "average_score": average_score,
-        "average_prompt_tokens": average_prompt_tokens,
-        "average_completion_tokens": average_completion_tokens,
-        "average_total_tokens": average_total_tokens,
-        "average_tool_calls": average_tool_calls,
-        "average_time_seconds": average_time,
-        "average_cost": average_cost,
-        "save_path": save_path,
-        "status": "Completed",
-    }
-    if isinstance(result, dict):
-        result["summary"] = summary
-
-    ConsoleDisplay.print_kv_panel(
-        title="[bold green]Benchmark Run Finished[/bold green]",
-        items=[
-            ("Model", model),
-            ("Domains", ", ".join(domain)),
-            ("Dataset Objects", len(dataset_objects)),
-            ("Total Runs", total_runs),
-            ("Average Score", average_score_display),
-            ("Avg Prompt Tokens", f"{average_prompt_tokens:.2f}" if isinstance(average_prompt_tokens, (int, float)) else "-"),
-            ("Avg Completion Tokens", f"{average_completion_tokens:.2f}" if isinstance(average_completion_tokens, (int, float)) else "-"),
-            ("Avg Total Tokens", f"{average_total_tokens:.2f}" if isinstance(average_total_tokens, (int, float)) else "-"),
-            ("Avg Tool Calls", f"{average_tool_calls:.2f}" if isinstance(average_tool_calls, (int, float)) else "-"),
-            ("Avg Time (s)", f"{average_time:.2f}" if isinstance(average_time, (int, float)) else "-"),
-            ("Avg Cost", f"{average_cost:.6f}" if isinstance(average_cost, (int, float)) else "-"),
-            ("Save Path", save_path),
-            ("Status", "[green]Completed[/green]"),
-        ],
-        border_style="green",
-    )
-    return result
 
 if __name__ == "__main__":
     args = parse_args()
@@ -271,11 +361,15 @@ if __name__ == "__main__":
         save_path=args.save_path,
         domain=domain,
         agent_params=json.loads(args.agent_params),
-        hidden_rates=args.hidden_rates,
         max_steps=args.max_steps,
         tool_failure_rates=parse_list_arg(args.tool_failure_rates, float),
         num_trials=args.num_trials,
         tools_domain_only=args.tools_domain_only,
         data_dir=args.data_dir,
+        max_query_ids=args.max_query_ids,
+        max_query_fields=args.max_query_fields,
+        overwrite_results=args.overwrite_results,
+        hidden_slots=args.hidden_slots if args.hidden_slots else None,
+        branch_budget=args.branch_budget if args.branch_budget else None,
         seed=args.seed,
     )

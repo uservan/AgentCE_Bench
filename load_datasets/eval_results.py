@@ -1,9 +1,6 @@
 import json
 
-from data_generation.generation.constraints import (
-    aggregate_constraint_satisfied,
-    item_matches_slot_constraint,
-)
+from data_generation.generation.constraints import aggregate_constraint_satisfied, item_matches_slot_constraint
 from data_generation.domains import DOMAIN_SPECS
 
 
@@ -79,23 +76,15 @@ def _slot_constraint_map(slot_constraints):
     return constraint_map
 
 
-def _validate_shape(results, row_constraints, col_constraints):
-    rows = len(results)
-    cols = len(results[0])
-
-    if len(row_constraints) != rows:
-        return False, f"row_constraints count {len(row_constraints)} does not match results rows {rows}"
-    if len(col_constraints) != cols:
-        return False, f"col_constraints count {len(col_constraints)} does not match results cols {cols}"
-
+def _validate_shape(results):
+    if not results or not results[0]:
+        return False, "results must be a non-empty grid"
     return True, None
 
 
 def validate_generated_results(
     domain,
     global_constraints,
-    row_constraints,
-    col_constraints,
     results,
     item_pool=None,
     slot_constraints=None,
@@ -108,7 +97,7 @@ def validate_generated_results(
         raise ValueError(f"Unsupported domain: {domain}")
 
     normalized_grid, normalized_ids = _normalize_results(domain, results, item_pool=item_pool)
-    shape_ok, shape_error = _validate_shape(normalized_grid, row_constraints, col_constraints)
+    shape_ok, shape_error = _validate_shape(normalized_grid)
     if not shape_ok:
         return (False, shape_error) if return_details else False
 
@@ -128,24 +117,6 @@ def validate_generated_results(
                 if not item_matches_slot_constraint(item, slot_constraint, spec["slot_rules"]):
                     message = f"slot constraint failed at ({row_index}, {col_index})"
                     return (False, message) if return_details else False
-
-    for row_index, row_items in enumerate(normalized_grid):
-        for rule in spec["row_rules"]:
-            if rule["name"] not in row_constraints[row_index]:
-                continue
-            if not aggregate_constraint_satisfied(rule, row_constraints[row_index][rule["name"]], row_items):
-                message = f"row constraint '{rule['name']}' failed at row {row_index}"
-                return (False, message) if return_details else False
-
-    cols = len(normalized_grid[0])
-    for col_index in range(cols):
-        col_items = [normalized_grid[row_index][col_index] for row_index in range(len(normalized_grid))]
-        for rule in spec["col_rules"]:
-            if rule["name"] not in col_constraints[col_index]:
-                continue
-            if not aggregate_constraint_satisfied(rule, col_constraints[col_index][rule["name"]], col_items):
-                message = f"col constraint '{rule['name']}' failed at col {col_index}"
-                return (False, message) if return_details else False
 
     all_items = [item for row in normalized_grid for item in row]
     item_lookup = {
@@ -199,8 +170,6 @@ def validate_generated_results_from_dataset(
     return validate_generated_results(
         domain=dataset["domain"],
         global_constraints=dataset["global_constraints"],
-        row_constraints=dataset["row_constraints"],
-        col_constraints=dataset["col_constraints"],
         results=results,
         item_pool=dataset["item_pool"],
         slot_constraints=slot_constraints,

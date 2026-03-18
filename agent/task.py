@@ -1,5 +1,4 @@
 import copy
-import json
 import random
 from typing import Any
 
@@ -11,28 +10,33 @@ except ImportError:
     SavedDatasetObject = Any  # type: ignore
 
 
-def _build_partial_solution(truth_solution: list, hidden_rate: float, seed: int | None = None) -> list:
+DEFAULT_MAX_QUERY_IDS = 5
+DEFAULT_MAX_QUERY_FIELDS = 6
+
+
+def _build_hidden_slot_path(dataset_object: SavedDatasetObject) -> list[tuple[int, int]]:
+    path: list[tuple[int, int]] = []
+    for slot in getattr(dataset_object, "slots", []):
+        row = slot.get("row")
+        col = slot.get("col")
+        if isinstance(row, int) and isinstance(col, int):
+            path.append((row, col))
+    return path
+
+
+def _resolve_partial_solution(
+    dataset_object: SavedDatasetObject,
+    seed: int | None = None,
+) -> list:
     """
-    根据 hidden_rate 随机将对应比例的 slot 设为 None，得到类似 truth_solution 的 partial_solution。
+    新数据集直接使用数据文件中的 partial_solution。
+    对旧数据做兼容时，若缺失该字段，则退化为 truth_solution 的拷贝。
     """
-    if hidden_rate <= 0:
-        return copy.deepcopy(truth_solution)
-    solution = copy.deepcopy(truth_solution)
-    positions = [
-        (row_idx, col_idx)
-        for row_idx, row in enumerate(truth_solution)
-        for col_idx in range(len(row))
-    ]
-    if not positions:
-        return solution
-    n_hide = int(len(positions) * hidden_rate)
-    if n_hide <= 0:
-        return solution
-    rng = random.Random(seed) if seed is not None else random
-    to_hide = rng.sample(positions, min(n_hide, len(positions)))
-    for row_idx, col_idx in to_hide:
-        solution[row_idx][col_idx] = None
-    return solution
+    del seed
+    partial_solution = getattr(dataset_object, "partial_solution", None)
+    if partial_solution:
+        return copy.deepcopy(partial_solution)
+    return copy.deepcopy(dataset_object.truth_solution)
 
 
 class Task:
@@ -41,24 +45,41 @@ class Task:
     def __init__(
         self,
         dataset_object: SavedDatasetObject,
-        hidden_rate: float = 0.0,
         max_steps: int = 1000,
         tool_failure_rate: float = 0.0,
         tools_domain_only: bool = True,
+        max_query_ids: int = DEFAULT_MAX_QUERY_IDS,
+        max_query_fields: int = DEFAULT_MAX_QUERY_FIELDS,
         seed: int | None = None,
     ):
         self.dataset_object: SavedDatasetObject = dataset_object
-        self.hidden_rate = hidden_rate
         self.max_steps = max_steps
         self.tool_failure_rate = tool_failure_rate
         self.tools_domain_only = tools_domain_only
+        self.max_query_ids = max_query_ids
+        self.max_query_fields = max_query_fields
         self.seed = seed
-        self.partial_solution: list = _build_partial_solution(
-            dataset_object.truth_solution,
-            hidden_rate=hidden_rate,
+        self.hidden_slots = copy.deepcopy(getattr(dataset_object, "hidden_slots", []))
+        self.branch_budget = getattr(dataset_object, "branch_budget", None)
+        self.branch_slot_count = getattr(dataset_object, "branch_slot_count", None)
+        self.branch_budget_allocations = copy.deepcopy(
+            getattr(
+                dataset_object,
+                "branch_budget_allocations",
+                dataset_object.meta.get("branch_budget_allocations", []),
+            )
+        )
+        self.partial_solution: list = _resolve_partial_solution(
+            dataset_object,
             seed=seed,
         )
         self.agent_solution: list = copy.deepcopy(self.partial_solution)
+        self.hidden_slot_path: list[tuple[int, int]] = _build_hidden_slot_path(dataset_object)
+        self.hidden_slot_index_map: dict[tuple[int, int], int] = {
+            slot_position: index
+            for index, slot_position in enumerate(self.hidden_slot_path)
+        }
+        self.current_slot_index = 0
 
     def build_initial_messages(self) -> list[dict[str, Any]]:
         """构建初始消息列表。"""
@@ -75,21 +96,19 @@ class Task:
         """评估任务完成情况。"""
         try:
             from data_generation.validation import (
-                validate_col_constraints,
                 validate_global_constraints,
-                validate_row_constraints,
+                validate_slot_constraints,
             )
         except ImportError:
             from validation import (
-                validate_col_constraints,
                 validate_global_constraints,
-                validate_row_constraints,
+                validate_slot_constraints,
             )
 
         solution = self.agent_solution
         dataset = self.dataset_object
-        rows = dataset.meta["rows"]
-        cols = dataset.meta["cols"]
+        rows = getattr(dataset, "rows", None) or dataset.meta["rows"]
+        cols = getattr(dataset, "cols", None) or dataset.meta["cols"]
 
         if len(solution) != rows or any(len(row) != cols for row in solution):
             return {
@@ -103,26 +122,16 @@ class Task:
                 "reason": "solution still contains empty slots",
             }
 
-        for row_index in range(rows):
-            is_valid, reason = validate_row_constraints(
+        for slot in dataset.slots:
+            is_valid, reason = validate_slot_constraints(
                 solution=solution,
                 domain=dataset.domain,
-                row_index=row_index,
-                row_constraints=dataset.row_constraints,
+                row_index=slot["row"],
+                col_index=slot["col"],
+                slot_constraint=slot["slot_constraints"],
                 item_pool=dataset.item_pool,
                 slots=dataset.slots,
-            )
-            if not is_valid:
-                return {"score": False, "reason": reason}
-
-        for col_index in range(cols):
-            is_valid, reason = validate_col_constraints(
-                solution=solution,
-                domain=dataset.domain,
-                col_index=col_index,
-                col_constraints=dataset.col_constraints,
-                item_pool=dataset.item_pool,
-                slots=dataset.slots,
+                truth_solution=dataset.truth_solution,
             )
             if not is_valid:
                 return {"score": False, "reason": reason}
@@ -133,11 +142,94 @@ class Task:
             global_constraints=dataset.global_constraints,
             item_pool=dataset.item_pool,
             slots=dataset.slots,
+            truth_solution=dataset.truth_solution,
         )
         if not is_valid:
             return {"score": False, "reason": reason}
 
         return {"score": True, "reason": None}
+
+    def get_hidden_slot_index(self, row: int, col: int) -> int | None:
+        return self.hidden_slot_index_map.get((row, col))
+
+    def get_current_target_slot(self) -> dict[str, int] | None:
+        if self.current_slot_index >= len(self.hidden_slot_path):
+            return None
+        row, col = self.hidden_slot_path[self.current_slot_index]
+        return {
+            "index": self.current_slot_index,
+            "row": row,
+            "col": col,
+        }
+
+    def get_previous_target_slot(self) -> dict[str, int] | None:
+        if not self.hidden_slot_path:
+            return None
+        previous_index = min(self.current_slot_index - 1, len(self.hidden_slot_path) - 1)
+        if previous_index < 0:
+            return None
+        row, col = self.hidden_slot_path[previous_index]
+        return {
+            "index": previous_index,
+            "row": row,
+            "col": col,
+        }
+
+    def get_remaining_hidden_slots(self) -> list[dict[str, int]]:
+        remaining: list[dict[str, int]] = []
+        for index, (row, col) in enumerate(self.hidden_slot_path[self.current_slot_index:], start=self.current_slot_index):
+            remaining.append(
+                {
+                    "index": index,
+                    "row": row,
+                    "col": col,
+                }
+            )
+        return remaining
+
+    def get_path_state(self) -> dict[str, Any]:
+        return {
+            "current_slot_index": self.current_slot_index,
+            "current_slot": self.get_current_target_slot(),
+            "previous_slot": self.get_previous_target_slot(),
+            "remaining_slots": self.get_remaining_hidden_slots(),
+            "slot_path": [
+                {
+                    "index": index,
+                    "row": row,
+                    "col": col,
+                }
+                for index, (row, col) in enumerate(self.hidden_slot_path)
+            ],
+        }
+
+    def can_access_hidden_slot(self, row: int, col: int) -> bool:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return False
+        return slot_index == self.current_slot_index
+
+    def advance_after_current_slot_fill(self, row: int, col: int) -> None:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return
+        if slot_index == self.current_slot_index:
+            self.current_slot_index = min(self.current_slot_index + 1, len(self.hidden_slot_path))
+
+    def can_clear_previous_hidden_slot(self, row: int, col: int) -> bool:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return False
+        previous_slot = self.get_previous_target_slot()
+        if previous_slot is None:
+            return False
+        return slot_index == previous_slot["index"]
+
+    def rollback_to_slot(self, row: int, col: int) -> None:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return
+        self.current_slot_index = slot_index
 
     def call_tool(
         self,

@@ -16,9 +16,14 @@ PARAMETER_PATTERN = re.compile(
 def parse_tool_calls(model: str, response_message: Any) -> list[dict[str, str]]:
     normalized_model = model.lower()
     if "qwen3.5" in normalized_model or "qwen3_5" in normalized_model:
-        return _parse_qwen3_5_tool_calls(_build_message_text(response_message))
+        parsed_tool_calls = _parse_direct_tool_calls(response_message)
+        if parsed_tool_calls:
+            return deduplicate_tool_calls(parsed_tool_calls)
+        return deduplicate_tool_calls(
+            _parse_qwen3_5_tool_calls(_build_message_text(response_message))
+        )
 
-    return _parse_direct_tool_calls(response_message)
+    return deduplicate_tool_calls(_parse_direct_tool_calls(response_message))
 
 
 def _parse_direct_tool_calls(response_message: Any) -> list[dict[str, str]]:
@@ -56,6 +61,20 @@ def _parse_qwen3_5_tool_calls(content: str) -> list[dict[str, str]]:
             }
         )
     return parsed_tool_calls
+
+
+def deduplicate_tool_calls(tool_calls: list[dict[str, str]]) -> list[dict[str, str]]:
+    deduplicated: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for tool_call in tool_calls:
+        key = (tool_call.get("name", ""), tool_call.get("arguments", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduplicated.append(tool_call)
+    return deduplicated
+
+
 
 
 def _build_message_text(response_message: Any) -> str:

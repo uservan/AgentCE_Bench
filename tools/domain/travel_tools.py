@@ -15,8 +15,7 @@ class TravelToolsHandler(BaseToolsHandler):
             "query_travel_slot_candidates": self.query_travel_slot_candidates,
             "get_travel_item_info": self.get_travel_item_info,
             "get_travel_item_attributes": self.get_travel_item_attributes,
-            "check_travel_row_constraints": self.check_travel_row_constraints,
-            "check_travel_col_constraints": self.check_travel_col_constraints,
+            "check_travel_slot_constraints": self.check_travel_slot_constraints,
             "check_travel_global_constraints": self.check_travel_global_constraints,
         })
 
@@ -35,27 +34,21 @@ class TravelToolsHandler(BaseToolsHandler):
         """
         return self._get_item_info(id)
 
-    def get_travel_item_attributes(self, ids: list[str], field: str) -> Messages:
-        """Return one selected attribute value for up to five travel item ids.
+    def get_travel_item_attributes(self, ids: list[str], field: str | list[str]) -> Messages:
+        """Return selected attribute value(s) for a batch of travel item ids.
 
-        ids: List of travel item ids as strings, with at most 5 items.
-        field: Attribute name to retrieve for each travel item.
+        ids: List of travel item ids as strings, up to the current task limit.
+        field: Attribute name(s) to retrieve. A string for one attribute, or a list within the current task limit.
         """
-        return self._get_item_attribute_values(ids, field, max_items=5)
+        return self._get_item_attribute_values(ids, field)
 
-    def check_travel_row_constraints(self, row: int) -> Messages:
-        """Check whether a row satisfies the travel row constraints.
+    def check_travel_slot_constraints(self, row: int, col: int) -> Messages:
+        """Check whether a hidden slot satisfies its slot constraints.
 
         row: Row index as an integer.
-        """
-        return self._check_row_constraints(row)
-
-    def check_travel_col_constraints(self, col: int) -> Messages:
-        """Check whether a column satisfies the travel column constraints.
-
         col: Column index as an integer.
         """
-        return self._check_col_constraints(col)
+        return self._check_slot_constraints(row, col)
 
     def check_travel_global_constraints(self) -> Messages:
         """Check whether the current travel grid satisfies the global constraints."""

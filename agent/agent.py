@@ -54,6 +54,7 @@ class Agent:
             "cost": 0.0,
             "time": 0.0,
             "tool_calls_num": 0,
+            "step_num": 0,
         }
         step_count = 0
         raw_messages = []
@@ -95,10 +96,11 @@ class Agent:
                     message=response.to_dict(),
                 )
                 response_message = response.message
+                finish_reason = None
                 try:
                     finish_reason = response.finish_reason
                     if finish_reason == "length":
-                        logger.warning("Output might be incomplete due to token limit!")
+                        logger.warning("Output was truncated due to token limit")
                 except Exception as e:
                     logger.error(e)
                     raise e
@@ -113,47 +115,73 @@ class Agent:
                     "content": assistant_content,
                     "tool_calls": None
                 }
-                parsed_tool_calls = parse_tool_calls(self.model, response_message)
-                normalized_tool_calls = []
-                if parsed_tool_calls:
-                    assistant_message["tool_calls"] = [
-                        {
-                            "id": f"tool_call_{step_count}_{index}",
-                            "type": "function",
-                            "function": {
-                                "name": tool_call["name"],
-                                "arguments": tool_call["arguments"],
-                            },
-                        }
-                        for index, tool_call in enumerate(parsed_tool_calls, start=1)
-                    ]
-                    normalized_tool_calls = assistant_message["tool_calls"]
                 litellm_messages.append(assistant_message)
-                # self._append_raw_message(
-                #     raw_messages,
-                #     kind="assistant_message",
-                #     message=assistant_message,
-                # )
-                raw_r = []
-                for tool_call in normalized_tool_calls:
-                    tool_name = tool_call["function"]["name"]
-                    tool_args = json.loads(tool_call["function"]["arguments"] or "{}")
-                    tool_result = task.call_tool(tool_name, tool_args)
-                    total_usage["tool_calls_num"] += 1
-                    r = {
-                            "role": "tool",
-                            "tool_call_id": tool_call["id"],
-                            "name": tool_name,
-                            "content": self._stringify(tool_result),
-                        }
-                    litellm_messages.append(r)
-                    raw_r.append(r)
-                if raw_r:
-                    self._append_raw_message(
-                        raw_messages,
-                        kind="tool_message",
-                        message=raw_r,
+                if finish_reason == "length":
+                    max_tokens = request_params.get("max_tokens")
+                    max_tokens_text = (
+                        f"max_tokens={max_tokens}"
+                        if max_tokens is not None
+                        else "the configured token limit"
                     )
+                    litellm_messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Your previous response was truncated due to {max_tokens_text}. "
+                                "Do not assume any unfinished tool call was executed. "
+                                "Please continue from where you stopped and re-issue any tool call in full if needed."
+                            ),
+                        }
+                    )
+                    continue
+                else:
+                    parsed_tool_calls = parse_tool_calls(self.model, response_message)
+                    normalized_tool_calls = []
+                    if parsed_tool_calls:
+                        assistant_message["tool_calls"] = [
+                            {
+                                "id": f"tool_call_{step_count}_{index}",
+                                "type": "function",
+                                "function": {
+                                    "name": tool_call["name"],
+                                    "arguments": tool_call["arguments"],
+                                },
+                            }
+                            for index, tool_call in enumerate(parsed_tool_calls, start=1)
+                        ]
+                        normalized_tool_calls = assistant_message["tool_calls"]
+                    raw_r = []
+                    for tool_call in normalized_tool_calls:
+                        tool_name = tool_call["function"]["name"]
+                        try:
+                            tool_args = json.loads(tool_call["function"]["arguments"] or "{}")
+                        except json.JSONDecodeError as e:
+                            logger.warning("Tool %s arguments parse failed, skipping: %s", tool_name, e)
+                            r = {
+                                "role": "tool",
+                                "tool_call_id": tool_call["id"],
+                                "name": tool_name,
+                                "content": f"Tool arguments parse failed (possibly truncated), skipping: {e}",
+                            }
+                            litellm_messages.append(r)
+                            raw_r.append(r)
+                            continue
+                        tool_result = task.call_tool(tool_name, tool_args)
+                        total_usage["tool_calls_num"] += 1
+                        r = {
+                                "role": "tool",
+                                "tool_call_id": tool_call["id"],
+                                "name": tool_name,
+                                "content": self._stringify(tool_result),
+                            }
+                        litellm_messages.append(r)
+                        raw_r.append(r)
+                    if raw_r:
+                        self._append_raw_message(
+                            raw_messages,
+                            kind="tool_message",
+                            message=raw_r,
+                        )
         except Exception as e:
             status = "error"
             reason = str(e)
@@ -161,6 +189,7 @@ class Agent:
 
         elapsed_time = time.perf_counter() - start_time
         total_usage["time"] = elapsed_time
+        total_usage["step_num"] = step_count
         return RunResult(
             task=task,
             content=litellm_messages,

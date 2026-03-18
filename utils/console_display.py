@@ -81,13 +81,9 @@ class ConsoleDisplay:
     @classmethod
     def print_solution_report(cls, title: str, solution_report: dict) -> None:
         rows = [
-            ("row", result["row"], "[green]PASS[/green]" if result["ok"] else "[red]FAIL[/red]", result["reason"] or "-")
-            for result in solution_report["rows"]
+            ("slot", f"({result['row']}, {result['col']})", "[green]PASS[/green]" if result["ok"] else "[red]FAIL[/red]", result["reason"] or "-")
+            for result in solution_report["slots"]
         ]
-        rows.extend(
-            ("col", result["col"], "[green]PASS[/green]" if result["ok"] else "[red]FAIL[/red]", result["reason"] or "-")
-            for result in solution_report["cols"]
-        )
         rows.append(
             (
                 "global",
@@ -110,23 +106,19 @@ class ConsoleDisplay:
         for slot in slot_examples:
             rows = []
             if not slot["examples"]:
-                rows.append(("-", "-", "-", "-", "-", "No alternative candidate examples"))
+                rows.append(("-", "-", "-", "-", "No alternative candidate examples"))
             else:
                 for example in slot["examples"]:
                     reasons = []
-                    if example["row_reason"]:
-                        reasons.append(f"row: {example['row_reason']}")
-                    if example["col_reason"]:
-                        reasons.append(f"col: {example['col_reason']}")
+                    if example["slot_reason"]:
+                        reasons.append(f"slot: {example['slot_reason']}")
                     if example["global_reason"]:
                         reasons.append(f"global: {example['global_reason']}")
 
                     rows.append(
                         (
                             example["candidate_id"],
-                            "[green]yes[/green]" if example["is_valid_candidate"] else "[red]no[/red]",
-                            "[green]PASS[/green]" if example["row_ok"] else "[red]FAIL[/red]",
-                            "[green]PASS[/green]" if example["col_ok"] else "[red]FAIL[/red]",
+                            "[green]PASS[/green]" if example["slot_ok"] else "[red]FAIL[/red]",
                             "[green]PASS[/green]" if example["global_ok"] else "[red]FAIL[/red]",
                             "\n".join(reasons) if reasons else "-",
                         )
@@ -134,12 +126,11 @@ class ConsoleDisplay:
 
             cls.print_table(
                 title="Candidate checks",
-                headers=("Candidate", "Valid Candidate", "Row", "Col", "Global", "Reasons"),
+                headers=("Candidate", "Slot", "Global", "Reasons"),
                 rows=rows,
                 panel_title=(
                     f"[bold blue]Slot ({slot['row']}, {slot['col']})[/bold blue] "
                     f"[white]truth={slot['truth_id']}[/white] "
-                    f"[white]valid={slot['valid_candidate_ids']}[/white]"
                 ),
                 border_style="blue",
             )
@@ -151,7 +142,8 @@ class ConsoleDisplay:
                 domain,
                 summary["instance_id"],
                 summary["avg_candidates"],
-                summary["avg_valid_options"],
+                summary["branch_budget"],
+                summary["branch_slots"],
                 summary["item_pool_size"],
             )
             for summary in summaries
@@ -161,8 +153,9 @@ class ConsoleDisplay:
             headers=(
                 "Domain",
                 "Instance ID",
-                "Avg Candidates Each Slot",
-                "Avg Valid Options Each Slot",
+                "Avg Candidates Each Hidden Slot",
+                "Branch Budget",
+                "Branch Slots",
                 "Item Pool Size",
             ),
             rows=rows,
