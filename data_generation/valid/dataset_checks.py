@@ -12,6 +12,17 @@ def _replace_assignments(truth_solution, assignments):
     return solution
 
 
+def _replace_assignments_with_open_future_hidden_slots(truth_solution, assignments, future_hidden_slots):
+    solution = _replace_assignments(truth_solution, assignments)
+    for slot in future_hidden_slots:
+        solution[slot["row"]][slot["col"]] = None
+    return solution
+
+
+def _iter_required_open_assignments(branch_slots):
+    yield {}
+
+
 def _iter_prior_branch_assignments(branch_slots):
     yield {}
     if not branch_slots:
@@ -163,20 +174,23 @@ def validate_dataset_structure(
 
     for current_index, slot in enumerate(branch_slots):
         previous_slots = branch_slots[:current_index]
+        future_branch_slots = branch_slots[current_index + 1:]
         for candidate_id in slot["decoy_ids"]:
             for prior_assignments in _iter_prior_branch_assignments(previous_slots):
                 trial_assignments = dict(prior_assignments)
                 trial_assignments[(slot["row"], slot["col"])] = candidate_id
-                trial_solution = _replace_assignments(truth_solution, trial_assignments)
-                global_ok, _ = validate_global_constraints(
-                    trial_solution,
+                truth_completed_solution = _replace_assignments(truth_solution, trial_assignments)
+                truth_completed_ok, _ = validate_global_constraints(
+                    truth_completed_solution,
                     dataset["domain"],
                     dataset["global_constraints"],
                     item_pool,
                     dataset["slots"],
                     truth_solution=truth_solution,
                 )
-                if global_ok:
+                if truth_completed_ok:
                     return False
+                if not future_branch_slots:
+                    continue
 
     return True

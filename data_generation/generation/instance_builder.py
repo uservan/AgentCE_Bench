@@ -247,6 +247,16 @@ def build_instance_from_scaffold(scaffold):
         col_index = slot_index % cols
         allocated_budget = branch_budget_by_slot.get(slot_index, 0)
         branch_rank = len(branch_history) if slot_index in branch_budget_by_slot else None
+        future_branch_positions = [
+            future_slot_index
+            for future_slot_index in ordered_hidden_positions
+            if future_slot_index > slot_index and future_slot_index in branch_budget_by_slot
+        ]
+        future_hidden_positions = [
+            (future_slot_index // cols, future_slot_index % cols)
+            for future_slot_index in ordered_hidden_positions
+            if future_slot_index > slot_index
+        ]
         slot_entry, next_index = build_hidden_slot_entry(
             domain=domain,
             truth_solution=truth_solution,
@@ -258,7 +268,9 @@ def build_instance_from_scaffold(scaffold):
             candidates_per_slot=candidates_per_slot,
             branch_rank=branch_rank,
             allocated_budget=allocated_budget,
+            is_last_branch_slot=allocated_budget > 0 and not future_branch_positions,
             previous_branch_slots=branch_history,
+            future_hidden_positions=future_hidden_positions,
             next_index=next_index,
         )
         if slot_entry is None:
