@@ -162,28 +162,33 @@ class Task:
     def get_hidden_slot_index(self, row: int, col: int) -> int | None:
         return self.hidden_slot_index_map.get((row, col))
 
-    def get_current_target_slot(self) -> dict[str, int] | None:
-        if self.current_slot_index >= len(self.hidden_slot_path):
+    def _build_slot_descriptor(self, slot_index: int) -> dict[str, int] | None:
+        if slot_index < 0 or slot_index >= len(self.hidden_slot_path):
             return None
-        row, col = self.hidden_slot_path[self.current_slot_index]
+        row, col = self.hidden_slot_path[slot_index]
         return {
-            "index": self.current_slot_index,
+            "index": slot_index,
             "row": row,
             "col": col,
         }
 
+    def get_current_target_slot(self) -> dict[str, int] | None:
+        return self._build_slot_descriptor(self.current_slot_index)
+
     def get_previous_target_slot(self) -> dict[str, int] | None:
-        if not self.hidden_slot_path:
-            return None
-        previous_index = min(self.current_slot_index - 1, len(self.hidden_slot_path) - 1)
-        if previous_index < 0:
-            return None
-        row, col = self.hidden_slot_path[previous_index]
-        return {
-            "index": previous_index,
-            "row": row,
-            "col": col,
-        }
+        return self._build_slot_descriptor(self.current_slot_index - 1)
+
+    def get_next_target_slot(self) -> dict[str, int] | None:
+        return self._build_slot_descriptor(self.current_slot_index + 1)
+
+    def get_target_slot(self, direction: str) -> dict[str, int] | None:
+        if direction == "current":
+            return self.get_current_target_slot()
+        if direction == "previous":
+            return self.get_previous_target_slot()
+        if direction == "next":
+            return self.get_next_target_slot()
+        return None
 
     def get_remaining_hidden_slots(self) -> list[dict[str, int]]:
         remaining: list[dict[str, int]] = []
@@ -197,11 +202,25 @@ class Task:
             )
         return remaining
 
+    def get_history_target_slots(self) -> list[dict[str, int]]:
+        history: list[dict[str, int]] = []
+        for index, (row, col) in enumerate(self.hidden_slot_path[:self.current_slot_index]):
+            history.append(
+                {
+                    "index": index,
+                    "row": row,
+                    "col": col,
+                }
+            )
+        return history
+
     def get_path_state(self) -> dict[str, Any]:
         return {
             "current_slot_index": self.current_slot_index,
             "current_slot": self.get_current_target_slot(),
             "previous_slot": self.get_previous_target_slot(),
+            "next_slot": self.get_next_target_slot(),
+            "history_slots": self.get_history_target_slots(),
             "remaining_slots": self.get_remaining_hidden_slots(),
             "slot_path": [
                 {
@@ -219,14 +238,13 @@ class Task:
             return False
         return slot_index == self.current_slot_index
 
-    def advance_after_current_slot_fill(self, row: int, col: int) -> None:
+    def is_current_hidden_slot(self, row: int, col: int) -> bool:
         slot_index = self.get_hidden_slot_index(row, col)
         if slot_index is None:
-            return
-        if slot_index == self.current_slot_index:
-            self.current_slot_index = min(self.current_slot_index + 1, len(self.hidden_slot_path))
+            return False
+        return slot_index == self.current_slot_index
 
-    def can_clear_previous_hidden_slot(self, row: int, col: int) -> bool:
+    def is_previous_hidden_slot(self, row: int, col: int) -> bool:
         slot_index = self.get_hidden_slot_index(row, col)
         if slot_index is None:
             return False
@@ -235,10 +253,46 @@ class Task:
             return False
         return slot_index == previous_slot["index"]
 
+    def is_historical_hidden_slot(self, row: int, col: int) -> bool:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return False
+        return slot_index < self.current_slot_index
+
+    def is_next_hidden_slot(self, row: int, col: int) -> bool:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return False
+        return slot_index == self.current_slot_index + 1
+
+    def set_current_slot_value(self, id: str | None) -> bool:
+        current_slot = self.get_current_target_slot()
+        if current_slot is None:
+            return False
+        self.agent_solution[current_slot["row"]][current_slot["col"]] = id
+        return True
+
+    def clear_slots_from(self, row: int, col: int) -> bool:
+        slot_index = self.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return False
+        for clear_index in range(slot_index, len(self.hidden_slot_path)):
+            clear_row, clear_col = self.hidden_slot_path[clear_index]
+            self.agent_solution[clear_row][clear_col] = None
+        return True
+
+    def move_to_next_slot(self) -> bool:
+        next_slot = self.get_next_target_slot()
+        if next_slot is None:
+            return False
+        self.current_slot_index = next_slot["index"]
+        return True
+
     def rollback_to_slot(self, row: int, col: int) -> None:
         slot_index = self.get_hidden_slot_index(row, col)
         if slot_index is None:
             return
+        self.clear_slots_from(row, col)
         self.current_slot_index = slot_index
 
     def can_call_global_check(self) -> bool:

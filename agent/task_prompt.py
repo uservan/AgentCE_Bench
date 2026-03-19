@@ -40,8 +40,8 @@ BENCHMARK_SYSTEM_PROMPT = """
 
 def build_initial_messages(task: Any) -> list[dict[str, Any]]:
     """为 benchmark task 构建初始消息。"""
-    current_target_tool = "get_current_target_slot"
-    previous_target_tool = "get_previous_target_slot"
+    target_tool = "get_target_slot"
+    history_tool = "get_history_target_slots"
     system_content = BENCHMARK_SYSTEM_PROMPT.format(
         agent_instruction=build_agent_instruction(task),
         tool_usage=build_tool_usage_instruction(task),
@@ -57,7 +57,9 @@ def build_initial_messages(task: Any) -> list[dict[str, Any]]:
         "Each `null` value is a missing slot that still needs a valid item id.\n\n"
         f"{partial_repr}\n\n"
         "You must follow the hidden-slot path in order.\nOnly the current target hidden slot may be queried, checked, or filled next. "
-        "To roll back, you may clear the immediately previous hidden slot with `set_slot`."
+        f"Use `{target_tool}` to inspect the current/previous/next target slots. "
+        f"Use `{history_tool}` to list the historical hidden slots that you may roll back to. "
+        "Use `set_slot` only to fill or clear the current hidden slot. Use `goto_slot` to move to the next hidden slot or roll back to a previous hidden slot."
     )
     return [
         {"role": "system", "content": system_content},
@@ -93,15 +95,17 @@ def build_tool_usage_instruction(task: Any) -> str:
     multi_attr_tool = f"get_{domain}_item_attributes"
     slot_tool = f"check_{domain}_slot_constraints"
     global_tool = f"check_{domain}_global_constraints"
-    current_target_tool = "get_current_target_slot"
-    previous_target_tool = "get_previous_target_slot"
+    target_tool = "get_target_slot"
+    history_tool = "get_history_target_slots"
+    goto_tool = "goto_slot"
     max_query_ids = getattr(task, "max_query_ids", 5)
     max_query_fields = getattr(task, "max_query_fields", 6)
     global_check_budget = getattr(task, "global_check_budget", None)
     guidance_lines = [
         "Use the available tools instead of pretending to know hidden slot values.",
-        f"Follow the hidden-slot path in order and complete the hidden slots one by one. Use `{current_target_tool}` to get the current hidden slot position, use `{previous_target_tool}` to get the previous hidden slot position when needed, and use `set_slot` to update the current hidden slot or clear the immediately previous hidden slot.",
-        f"Each hidden slot has multiple options. Your choice for each slot must satisfy the corresponding slot constraints, and the completed grid must satisfy the global constraints. Use `{slot_tool}` when needed for any filled hidden slot, and use `{global_tool}` after all slots are filled.",
+        f"Follow the hidden-slot path in order and complete the hidden slots one by one. Use `{target_tool}` with direction `current`, `previous`, or `next` to inspect nearby target positions. Use `{history_tool}` to list the historical hidden slots that are currently available for rollback. Use `set_slot` only to change the current hidden slot, and use `{goto_tool}` to navigate.",
+        f"To move forward with `{goto_tool}`, first fill the current hidden slot. To roll back, call `{goto_tool}` with one of the coordinates returned by `{history_tool}`; that rollback clears the target hidden slot and every hidden slot after it.",
+        f"Each hidden slot has multiple options. Your choice for each slot must satisfy the corresponding slot constraints, and the completed grid must satisfy the global constraints. Use `{slot_tool}` when needed for the current hidden slot or already filled earlier hidden slots, and use `{global_tool}` only after all slots are filled.",
         f"Use the single-item info tool when you need all attributes for one item id. Use `{multi_attr_tool}` when you want up to {max_query_fields} selected attributes for up to {max_query_ids} item ids at once.",
         f"When the grid is complete and you are satisfied with the result, call `{STOP_FUNCTION_NAME}`.",
         f"Your final action must be a single call to `{STOP_FUNCTION_NAME}` with no other tool calls in that message.",

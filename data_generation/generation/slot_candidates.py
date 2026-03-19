@@ -3,15 +3,16 @@ import random
 from collections import Counter
 
 from data_generation.domains import DOMAIN_BUILDERS, DOMAIN_SPECS
-from data_generation.generation.constants import DEFAULT_SLOT_CANDIDATE_RETRIES
+from data_generation.generation.constants import (
+    DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
+    DEFAULT_SLOT_CANDIDATE_RETRIES,
+)
 from data_generation.generation.constraint_plan import active_rules
 from data_generation.generation.constraints import (
     build_slot_constraint,
     item_matches_slot_constraint,
 )
 from data_generation.valid.rules import rule_satisfied
-
-PREFERRED_OPEN_MATCH_RELAX_AFTER_TRIES = 50
 
 def global_constraints_satisfied(solution, domain, global_constraints, item_pool):
     spec = DOMAIN_SPECS[domain]
@@ -51,14 +52,30 @@ def _solution_with_open_future_hidden_slots(truth_solution, assignments, future_
     return solution
 
 
-def _iter_required_open_assignments(previous_branch_slots):
+def _iter_truth_only_open_assignments(previous_branch_slots):
+    del previous_branch_slots
     yield {}
 
 
-def _iter_preferred_open_assignments(previous_branch_slots):
-    for slot in previous_branch_slots:
-        for candidate_id in slot.get("decoy_ids", []):
-            yield {(slot["row"], slot["col"]): candidate_id}
+def _iter_partial_decoy_open_assignments(previous_branch_slots):
+    yield {}
+    slot_count = len(previous_branch_slots)
+    for truth_prefix_len in range(slot_count):
+        suffix_slots = previous_branch_slots[truth_prefix_len:]
+        if not suffix_slots:
+            continue
+        decoy_lists = [slot.get("decoy_ids", []) for slot in suffix_slots]
+        if any(not decoy_ids for decoy_ids in decoy_lists):
+            continue
+        for selected_ids in itertools.product(*decoy_lists):
+            yield {
+                (slot["row"], slot["col"]): candidate_id
+                for slot, candidate_id in zip(suffix_slots, selected_ids)
+            }
+
+
+def _iter_all_history_open_assignments(previous_branch_slots):
+    yield from _iter_previous_decoy_assignments(previous_branch_slots)
 
 
 def _build_rule_context(solution, item_pool, global_rules):
@@ -111,33 +128,34 @@ def _build_prior_assignment_contexts(
     future_hidden_positions,
 ):
     global_rules = active_rules(DOMAIN_SPECS[domain]["global_rules"], global_constraints)
-    required_open_contexts = []
-    for open_assignments in _iter_required_open_assignments(previous_branch_slots):
-        open_solution = _solution_with_open_future_hidden_slots(
-            truth_solution,
-            open_assignments,
-            future_hidden_positions,
-        )
-        open_solution[row_index][col_index] = None
-        required_open_contexts.append(_build_rule_context(open_solution, item_pool, global_rules))
+    def build_open_contexts(assignments_iter):
+        contexts = []
+        for open_assignments in assignments_iter:
+            open_solution = _solution_with_open_future_hidden_slots(
+                truth_solution,
+                open_assignments,
+                future_hidden_positions,
+            )
+            open_solution[row_index][col_index] = None
+            contexts.append(_build_rule_context(open_solution, item_pool, global_rules))
+        return contexts
 
-    preferred_open_contexts = []
-    for open_assignments in _iter_preferred_open_assignments(previous_branch_slots):
-        open_solution = _solution_with_open_future_hidden_slots(
-            truth_solution,
-            open_assignments,
-            future_hidden_positions,
-        )
-        open_solution[row_index][col_index] = None
-        preferred_open_contexts.append(_build_rule_context(open_solution, item_pool, global_rules))
+    tier_one_open_contexts = build_open_contexts(_iter_all_history_open_assignments(previous_branch_slots))
+    tier_two_open_contexts = build_open_contexts(_iter_partial_decoy_open_assignments(previous_branch_slots))
+    tier_three_open_contexts = build_open_contexts(_iter_truth_only_open_assignments(previous_branch_slots))
 
     full_contexts = []
     for prior_assignments in _iter_previous_decoy_assignments(previous_branch_slots):
         full_solution = _solution_with_assignments(truth_solution, prior_assignments)
         full_solution[row_index][col_index] = None
         full_contexts.append(_build_rule_context(full_solution, item_pool, global_rules))
-    combined_preferred_open_contexts = [*required_open_contexts, *preferred_open_contexts]
-    return global_rules, required_open_contexts, combined_preferred_open_contexts, full_contexts
+    return (
+        global_rules,
+        tier_one_open_contexts,
+        tier_two_open_contexts,
+        tier_three_open_contexts,
+        full_contexts,
+    )
 
 
 def _rule_is_valid_with_candidate(rule, constraint_value, context_value, candidate, row_index):
@@ -189,17 +207,15 @@ def _candidate_satisfies_decoy_requirements(
     return True
 
 
-def _count_preferred_open_matches(
+def _candidate_satisfies_open_contexts(
     *,
     candidate,
     row_index,
     global_constraints,
     global_rules,
-    preferred_open_assignment_contexts,
+    open_assignment_contexts,
 ):
-    matched_contexts = 0
-    for open_context in preferred_open_assignment_contexts:
-        is_valid = True
+    for open_context in open_assignment_contexts:
         for rule in global_rules:
             constraint_value = global_constraints[rule["name"]]
             if rule["type"] in ("sum_min", "count_min", "count_min_threshold"):
@@ -211,11 +227,8 @@ def _count_preferred_open_matches(
                 candidate,
                 row_index,
             ):
-                is_valid = False
-                break
-        if is_valid:
-            matched_contexts += 1
-    return matched_contexts
+                return False
+    return True
 
 
 def _infer_numeric_attr_bounds(attr, item_pool, global_rules, slot_constraint, slot_rules):
@@ -380,6 +393,32 @@ def _build_target_specs(
     return primary_target_specs or fallback_target_specs
 
 
+def _select_preference_stage(
+    attempt_index: int,
+    preference_try_thresholds: list[int],
+) -> int | None:
+    tier_one_limit, tier_two_limit, tier_three_limit = preference_try_thresholds
+    if attempt_index <= tier_one_limit:
+        return 1
+    if attempt_index <= tier_two_limit:
+        return 2
+    if attempt_index <= tier_three_limit:
+        return 3
+    return None
+
+
+def _stage_value_and_label(active_stage: int | None, is_last_branch_slot: bool) -> tuple[int, str]:
+    if is_last_branch_slot:
+        return 4, "last_branch_hard_only"
+    if active_stage == 1:
+        return 1, "tier_1"
+    if active_stage == 2:
+        return 2, "tier_2"
+    if active_stage == 3:
+        return 3, "tier_3"
+    return 4, "hard_only"
+
+
 def _apply_target_spec(candidate, target_spec, item_pool):
     guided = dict(candidate)
     kind = target_spec["kind"]
@@ -438,11 +477,14 @@ def _extend_decoy_ids(
     previous_branch_slots,
     is_last_branch_slot,
     future_hidden_positions,
+    open_valid_preference_tries,
     next_index,
 ):
     spec = DOMAIN_SPECS[domain]
     decoy_ids = []
-    global_rules, required_open_assignment_contexts, preferred_open_assignment_contexts, full_assignment_contexts = _build_prior_assignment_contexts(
+    final_stage_value = None
+    final_stage_label = None
+    global_rules, tier_one_open_contexts, tier_two_open_contexts, tier_three_open_contexts, full_assignment_contexts = _build_prior_assignment_contexts(
         domain=domain,
         truth_solution=truth_solution,
         item_pool=item_pool,
@@ -452,32 +494,67 @@ def _extend_decoy_ids(
         previous_branch_slots=previous_branch_slots,
         future_hidden_positions=future_hidden_positions,
     )
-    is_last_hidden_slot = not future_hidden_positions
-    target_specs = _build_target_specs(
+    tier_one_target_specs = _build_target_specs(
         item_pool=item_pool,
         global_rules=global_rules,
         global_constraints=global_constraints,
-        required_open_assignment_contexts=required_open_assignment_contexts,
+        required_open_assignment_contexts=tier_one_open_contexts,
         full_assignment_contexts=full_assignment_contexts,
         row_index=row_index,
         is_last_branch_slot=is_last_branch_slot,
         slot_constraint=slot_constraint,
         slot_rules=spec["slot_rules"],
     )
-    fallback_candidates: list[tuple[str, dict]] = []
-    relax_preferred_open_requirement = False
-    effective_preferred_open_assignment_contexts = [] if is_last_branch_slot else preferred_open_assignment_contexts
+    tier_two_target_specs = _build_target_specs(
+        item_pool=item_pool,
+        global_rules=global_rules,
+        global_constraints=global_constraints,
+        required_open_assignment_contexts=tier_two_open_contexts,
+        full_assignment_contexts=full_assignment_contexts,
+        row_index=row_index,
+        is_last_branch_slot=is_last_branch_slot,
+        slot_constraint=slot_constraint,
+        slot_rules=spec["slot_rules"],
+    )
+    tier_three_target_specs = _build_target_specs(
+        item_pool=item_pool,
+        global_rules=global_rules,
+        global_constraints=global_constraints,
+        required_open_assignment_contexts=tier_three_open_contexts,
+        full_assignment_contexts=full_assignment_contexts,
+        row_index=row_index,
+        is_last_branch_slot=is_last_branch_slot,
+        slot_constraint=slot_constraint,
+        slot_rules=spec["slot_rules"],
+    )
 
     for attempt_index in range(1, DEFAULT_SLOT_CANDIDATE_RETRIES + 1):
         if len(decoy_ids) >= decoy_count:
             break
 
+        active_stage = None if is_last_branch_slot else _select_preference_stage(
+            attempt_index,
+            open_valid_preference_tries,
+        )
+        if active_stage == 1:
+            active_open_contexts = tier_one_open_contexts
+            active_target_specs = tier_one_target_specs
+        elif active_stage == 2:
+            active_open_contexts = tier_two_open_contexts
+            active_target_specs = tier_two_target_specs
+        elif active_stage == 3:
+            active_open_contexts = tier_three_open_contexts
+            active_target_specs = tier_three_target_specs
+        else:
+            active_open_contexts = []
+            active_target_specs = tier_three_target_specs
+
         candidate_id, candidate = _sample_candidate(domain, next_index)
         next_index += 1
         if candidate_id in item_pool:
             continue
-        if target_specs and random.random() < 0.85:
-            target_spec = random.choice(target_specs)
+        if active_target_specs and random.random() < 0.85:
+            target_spec = random.choice(active_target_specs)
             guided_candidate = _apply_target_spec(candidate, target_spec, item_pool)
             if guided_candidate is not None:
                 candidate = guided_candidate
@@ -494,38 +571,28 @@ def _extend_decoy_ids(
         ):
             continue
 
-        preferred_match_count = _count_preferred_open_matches(
+        if active_open_contexts and not _candidate_satisfies_open_contexts(
             candidate=candidate,
             row_index=row_index,
             global_constraints=global_constraints,
             global_rules=global_rules,
-            preferred_open_assignment_contexts=effective_preferred_open_assignment_contexts,
-        )
-        if (
-            effective_preferred_open_assignment_contexts
-            and not relax_preferred_open_requirement
-            and preferred_match_count == 0
+            open_assignment_contexts=active_open_contexts,
         ):
-            fallback_candidates.append((candidate_id, candidate))
-            if attempt_index >= PREFERRED_OPEN_MATCH_RELAX_AFTER_TRIES:
-                relax_preferred_open_requirement = True
             continue
 
         item_pool[candidate_id] = candidate
         decoy_ids.append(candidate_id)
-
-    while len(decoy_ids) < decoy_count and (
-        relax_preferred_open_requirement or not effective_preferred_open_assignment_contexts
-    ) and fallback_candidates:
-        fallback_candidate_id, fallback_candidate = fallback_candidates.pop(0)
-        if fallback_candidate_id in item_pool:
-            continue
-        item_pool[fallback_candidate_id] = fallback_candidate
-        decoy_ids.append(fallback_candidate_id)
+        current_stage_value, current_stage_label = _stage_value_and_label(
+            active_stage,
+            is_last_branch_slot,
+        )
+        if final_stage_value is None or current_stage_value >= final_stage_value:
+            final_stage_value = current_stage_value
+            final_stage_label = current_stage_label
 
     if len(decoy_ids) < decoy_count:
-        return None, next_index
-    return decoy_ids, next_index
+        return None, next_index, None, None
+    return decoy_ids, next_index, final_stage_value, final_stage_label
 
 
 def _extend_filter_ids(
@@ -574,6 +641,7 @@ def build_hidden_slot_entry(
     previous_branch_slots,
     future_hidden_positions,
     next_index,
+    open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
 ):
     spec = DOMAIN_SPECS[domain]
     truth_id = truth_solution[row_index][col_index]
@@ -583,8 +651,15 @@ def build_hidden_slot_entry(
     if 1 + allocated_budget > candidates_per_slot:
         return None, next_index
     decoy_ids: list[str] = []
+    decoy_generation_final_stage = None
+    decoy_generation_final_stage_label = None
     if allocated_budget > 0:
-        decoy_ids, next_index = _extend_decoy_ids(
+        (
+            decoy_ids,
+            next_index,
+            decoy_generation_final_stage,
+            decoy_generation_final_stage_label,
+        ) = _extend_decoy_ids(
             domain=domain,
             truth_solution=truth_solution,
             item_pool=item_pool,
@@ -596,6 +671,7 @@ def build_hidden_slot_entry(
             previous_branch_slots=previous_branch_slots,
             is_last_branch_slot=is_last_branch_slot,
             future_hidden_positions=future_hidden_positions,
+            open_valid_preference_tries=open_valid_preference_tries,
             next_index=next_index,
         )
         if decoy_ids is None:
@@ -625,4 +701,6 @@ def build_hidden_slot_entry(
         "is_branch_slot": branch_rank is not None,
         "branch_rank": branch_rank,
         "allocated_budget": allocated_budget,
+        "decoy_generation_final_stage": decoy_generation_final_stage,
+        "decoy_generation_final_stage_label": decoy_generation_final_stage_label,
     }, next_index

@@ -6,6 +6,7 @@ from data_generation.generation.constants import (
     DEFAULT_BRANCH_BUDGETS,
     DEFAULT_CANDIDATES_PER_SLOT,
     DEFAULT_COLS,
+    DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     DEFAULT_ROWS,
 )
 from data_generation.generation.constraint_plan import build_truth_constraints
@@ -159,6 +160,24 @@ def _shuffle_instance_item_ids(instance: dict) -> dict:
     return instance
 
 
+def _summarize_instance_decoy_generation(slots: list[dict]) -> tuple[int, str]:
+    branch_stage_values = [
+        slot.get("decoy_generation_final_stage")
+        for slot in slots
+        if slot.get("is_branch_slot") and slot.get("decoy_generation_final_stage") is not None
+    ]
+    if not branch_stage_values:
+        return 0, "not_applicable"
+    final_stage_value = max(branch_stage_values)
+    if final_stage_value == 1:
+        return 1, "tier_1"
+    if final_stage_value == 2:
+        return 2, "tier_2"
+    if final_stage_value == 3:
+        return 3, "tier_3"
+    return 4, "hard_only"
+
+
 def build_instance_scaffold(
     domain,
     rows=DEFAULT_ROWS,
@@ -226,7 +245,10 @@ def build_instance_scaffold(
     }
 
 
-def build_instance_from_scaffold(scaffold):
+def build_instance_from_scaffold(
+    scaffold,
+    open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
+):
     domain = scaffold["domain"]
     rows = scaffold["rows"]
     cols = scaffold["cols"]
@@ -271,6 +293,7 @@ def build_instance_from_scaffold(scaffold):
             is_last_branch_slot=allocated_budget > 0 and not future_branch_positions,
             previous_branch_slots=branch_history,
             future_hidden_positions=future_hidden_positions,
+            open_valid_preference_tries=open_valid_preference_tries,
             next_index=next_index,
         )
         if slot_entry is None:
@@ -286,6 +309,8 @@ def build_instance_from_scaffold(scaffold):
             partial_solution[slot["row"]][slot["col"]] = None
             hidden_slot_entries.append({"row": slot["row"], "col": slot["col"]})
 
+    instance_final_stage, instance_final_stage_label = _summarize_instance_decoy_generation(slots)
+
     instance = {
         "domain": domain,
         "meta": {
@@ -297,6 +322,8 @@ def build_instance_from_scaffold(scaffold):
             "branch_budget_allocations": scaffold["branch_budget_allocations"],
             "candidates_per_slot": candidates_per_slot,
             "requested_candidates_per_slot": scaffold["requested_candidates_per_slot"],
+            "decoy_generation_final_stage": instance_final_stage,
+            "decoy_generation_final_stage_label": instance_final_stage_label,
         },
         "global_constraints": global_constraints,
         "item_pool": item_pool,
@@ -317,6 +344,7 @@ def build_instance(
     candidates_per_slot=DEFAULT_CANDIDATES_PER_SLOT,
     branch_budget=DEFAULT_BRANCH_BUDGETS[0],
     hidden_slots=1,
+    open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
 ):
     scaffold = build_instance_scaffold(
         domain=domain,
@@ -328,4 +356,7 @@ def build_instance(
     )
     if scaffold is None:
         return None
-    return build_instance_from_scaffold(scaffold)
+    return build_instance_from_scaffold(
+        scaffold,
+        open_valid_preference_tries=open_valid_preference_tries,
+    )

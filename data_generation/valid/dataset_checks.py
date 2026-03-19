@@ -55,6 +55,8 @@ def validate_dataset_structure(
     expected_branch_budget = dataset["meta"]["branch_budget"]
     expected_branch_slot_count = dataset["meta"].get("branch_slot_count", 0)
     expected_branch_budget_allocations = dataset["meta"].get("branch_budget_allocations", [])
+    expected_decoy_generation_final_stage = dataset["meta"].get("decoy_generation_final_stage")
+    expected_decoy_generation_final_stage_label = dataset["meta"].get("decoy_generation_final_stage_label")
 
     if expected_candidates_per_slot != candidates_per_slot:
         return False
@@ -108,6 +110,8 @@ def validate_dataset_structure(
     if sum(slot.get("allocated_budget", 0) for slot in branch_slots) != expected_branch_budget:
         return False
 
+    branch_stage_values = []
+
     for slot in hidden_slot_entries:
         truth_id = truth_solution[slot["row"]][slot["col"]]
         if slot["truth_id"] != truth_id:
@@ -132,7 +136,21 @@ def validate_dataset_structure(
         if slot.get("is_branch_slot"):
             if len(decoy_ids) != slot.get("allocated_budget", 0):
                 return False
+            stage_value = slot.get("decoy_generation_final_stage")
+            stage_label = slot.get("decoy_generation_final_stage_label")
+            if stage_value is None and stage_label is None:
+                pass
+            else:
+                if stage_value not in (1, 2, 3, 4):
+                    return False
+                if stage_label not in ("tier_1", "tier_2", "tier_3", "hard_only", "last_branch_hard_only"):
+                    return False
+                branch_stage_values.append(stage_value)
         elif decoy_ids:
+            return False
+        elif slot.get("decoy_generation_final_stage") is not None:
+            return False
+        elif slot.get("decoy_generation_final_stage_label") is not None:
             return False
 
         slot_ok, _ = validate_slot_constraints(
@@ -192,5 +210,25 @@ def validate_dataset_structure(
                     return False
                 if not future_branch_slots:
                     continue
+
+    if not branch_stage_values:
+        if expected_decoy_generation_final_stage not in (None, 0):
+            return False
+        if expected_decoy_generation_final_stage_label not in (None, "not_applicable"):
+            return False
+    else:
+        if expected_decoy_generation_final_stage is None or expected_decoy_generation_final_stage_label is None:
+            return True
+        actual_final_stage = max(branch_stage_values)
+        if actual_final_stage != expected_decoy_generation_final_stage:
+            return False
+        if actual_final_stage == 1 and expected_decoy_generation_final_stage_label != "tier_1":
+            return False
+        if actual_final_stage == 2 and expected_decoy_generation_final_stage_label != "tier_2":
+            return False
+        if actual_final_stage == 3 and expected_decoy_generation_final_stage_label != "tier_3":
+            return False
+        if actual_final_stage == 4 and expected_decoy_generation_final_stage_label != "hard_only":
+            return False
 
     return True

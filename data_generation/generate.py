@@ -17,6 +17,7 @@ from data_generation.generation.constants import (
     DEFAULT_COLS,
     DEFAULT_HIDDEN_SLOTS,
     DEFAULT_MAX_RETRIES,
+    DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     DEFAULT_OUTPUT_DIR,
     DEFAULT_ROWS,
 )
@@ -82,6 +83,7 @@ def generate_dataset(
     hidden_slots=DEFAULT_HIDDEN_SLOTS,
     max_retries=DEFAULT_MAX_RETRIES,
     candidate_resample_retries=DEFAULT_CANDIDATE_RESAMPLE_RETRIES,
+    open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     seed=None,
     progress_callback: Callable[[dict[str, object]], None] | None = None,
 ):
@@ -99,6 +101,12 @@ def generate_dataset(
         raise ValueError("hidden_slots must be non-negative")
     if any(value < 0 for value in branch_budget_values):
         raise ValueError("branch_budget must be non-negative")
+    if len(open_valid_preference_tries) != 3:
+        raise ValueError("open_valid_preference_tries must contain exactly three integers")
+    if any(value < 0 for value in open_valid_preference_tries):
+        raise ValueError("open_valid_preference_tries must be non-negative")
+    if list(open_valid_preference_tries) != sorted(open_valid_preference_tries):
+        raise ValueError("open_valid_preference_tries must be non-decreasing")
 
     if seed is not None:
         random.seed(seed)
@@ -161,7 +169,10 @@ def generate_dataset(
                         "completed": completed_combinations,
                         "total": total_combinations,
                     })
-                candidate = build_instance_from_scaffold(scaffold)
+                candidate = build_instance_from_scaffold(
+                    scaffold,
+                    open_valid_preference_tries=list(open_valid_preference_tries),
+                )
                 if candidate is None:
                     last_failure_reason = (
                         "candidate_ids 重采样失败（无法为 hidden slots 构造满足多阶保证的 decoy/filter）"
@@ -267,6 +278,7 @@ def generate_all_datasets(
     hidden_slots=DEFAULT_HIDDEN_SLOTS,
     max_retries=DEFAULT_MAX_RETRIES,
     candidate_resample_retries=DEFAULT_CANDIDATE_RESAMPLE_RETRIES,
+    open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     seed=None,
     progress_callback: Callable[[dict[str, object]], None] | None = None,
 ):
@@ -282,6 +294,7 @@ def generate_all_datasets(
             hidden_slots=hidden_slots,
             max_retries=max_retries,
             candidate_resample_retries=candidate_resample_retries,
+            open_valid_preference_tries=open_valid_preference_tries,
             seed=seed,
             progress_callback=progress_callback,
         )
@@ -326,6 +339,18 @@ def build_arg_parser():
         type=int,
         default=DEFAULT_CANDIDATE_RESAMPLE_RETRIES,
         help="Maximum candidate/decoy resampling attempts for each scaffold.",
+    )
+    parser.add_argument(
+        "--open-valid-preference-tries",
+        type=int,
+        nargs=3,
+        default=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
+        metavar=("TIER1", "TIER2", "TIER3"),
+        help=(
+            "Three staged attempt thresholds for open-future decoy preferences: "
+            "tier1=all history truth/decoy combos, tier2=prefix-truth suffix-decoy combos, "
+            "tier3=all-history truth only. Defaults to 30 50 70."
+        ),
     )
     parser.add_argument("--seed", type=int, help="Optional random seed for reproducible generation.")
     parser.add_argument("--validate-file", help="Validate an existing dataset JSON file instead of generating.")
@@ -396,6 +421,7 @@ def main():
                 hidden_slots=hidden_slot_values,
                 max_retries=args.max_retries,
                 candidate_resample_retries=args.candidate_resample_retries,
+                open_valid_preference_tries=args.open_valid_preference_tries,
                 seed=args.seed,
                 progress_callback=on_progress,
             )
@@ -446,6 +472,7 @@ def main():
             hidden_slots=hidden_slot_values,
             max_retries=args.max_retries,
             candidate_resample_retries=args.candidate_resample_retries,
+            open_valid_preference_tries=args.open_valid_preference_tries,
             seed=args.seed,
             progress_callback=on_progress,
         )

@@ -7,7 +7,7 @@
 单个领域的生成例子：
 
 ```bash
-python data_generation/generate.py --domain course --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 160 --candidate-resample-retries 12 --seed 42
+python data_generation/generate.py --domain course --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 250 --candidate-resample-retries 12 --open-valid-preference-tries 30 60 100 --seed 42
 ```
 
 这条命令表示：
@@ -21,20 +21,104 @@ python data_generation/generate.py --domain course --rows 5 --cols 5 --hidden-sl
 - 输出到项目根目录下的 `data/`
 - 每个 hidden slot 默认显式存 `15` 个候选 item id；如果某个 budget 需要更多候选，生成器会自动放大该实例实际使用的 `candidates_per_slot`
 - `max_retries` 和 `candidate_resample_retries` 也可以通过命令行传入；如果不传，则分别默认使用 `160` 和 `12`
+- `open_valid_preference_tries` 默认是 `30 50 70`，表示 decoy 在 `future hidden=None` 场景下的三级偏好放松阈值：前 `30` 次优先满足“任意历史 truth/decoy 组合 + 当前 decoy”有效；前 `50` 次优先满足“前缀 truth + 后缀 decoy 组合 + 当前 decoy”有效；前 `70` 次优先满足“全历史 truth + 当前 decoy”有效；超过后只保留最初的硬约束
 - 每个实例里只会隐藏指定数量的 slot，非 hidden slot 保持固定，不再生成无用候选
 - 约束只保留 `slot_constraints` 和 `global_constraints`，不再生成 `row_constraints` / `col_constraints`
 - 使用随机种子 `42`
 
-当前生成逻辑是：
+当前生成逻辑可以分成两部分：先确定 `truth_solution` 和约束，再为每个 hidden slot 生成候选。
 
-- 先生成完整 `truth_solution`
-- 只为 hidden slots 生成 `slot_constraints`
-- 为整张表生成 `global_constraints`
-- `global_constraints` 会尽量覆盖全部全局属性；`slot_constraints` 默认每个 hidden slot 覆盖 2 个属性，并尽量让同一实例里所有 hidden slots 联合起来覆盖完全部 slot 属性；如果 hidden slots 太少，个别 slot 会覆盖超过 2 个属性来补齐
-- 随机选出部分 hidden slots 作为分支 slot，并把 `branch_budget` 拆成若干个正整数分配给这些分支 slot
-- `branch_budget_allocations` 的规则是：如果只有 1 个分支 slot，就直接分到 `[branch_budget]`；如果有 2 个分支 slot，只要求拆成两个正整数；只有当分支 slot 数不少于 3 时，才要求每个分配值都不超过 `branch_budget // 2`
-- 逐个分支 slot 构造 decoy：每个 decoy 必须满足本 slot 的 `slot_constraints`，但在和 truth / 更早分支 slot 的 decoy 组合时，一定破坏 `global_constraints`
-- 最后再为每个 hidden slot 补充一批 filter 候选，这些候选会直接违反该 slot 的 `slot_constraints`
+### 整体流程
+
+1. 先生成完整的 `truth_solution`，也就是最终正确答案网格。
+2. 在完整真值上生成 `global_constraints`，这些约束描述整张表整体必须满足的条件。
+3. 只对 hidden slots 生成 `slot_constraints`，不再为可见位置生成无用候选。
+4. `slot_constraints` 默认每个 hidden slot 覆盖 2 个属性，并尽量让所有 hidden slots 联合起来覆盖完整的 slot 属性空间；如果 hidden slots 太少，个别 slot 会覆盖超过 2 个属性来补齐。
+5. 从 hidden slots 中随机选出一部分作为 branch slots，再把 `branch_budget` 拆成若干个正整数，分配到这些 branch slots 上。
+6. 对每个 hidden slot 生成 `candidate_ids`，其中包括正确答案 `truth_id`、用于制造全局误导的 `decoy_ids`，以及直接违反本地 slot 约束的 `filter_candidate_ids`。
+
+`branch_budget_allocations` 的规则是：
+
+- 如果只有 1 个 branch slot，就直接分成 `[branch_budget]`
+- 如果有 2 个 branch slots，只要求拆成两个正整数
+- 只有当 branch slot 数不少于 3 时，才额外要求每个分配值都不超过 `branch_budget // 2`
+
+### Decoy 设计
+
+`decoy` 的目标不是“本地就错”，而是“本地看起来对，但放到全局里会错”。因此每个 `decoy` 都必须先满足当前 slot 的 `slot_constraints`，否则它就应该被归到 `filter_candidate_ids`，而不是 `decoy_ids`。
+
+生成某个 branch slot 的 `decoy` 时，系统会把“之前的 branch 决策”看成历史，把“后面的 hidden slots”看成未来，然后同时考虑两类场景：
+
+1. `future hidden = truth`
+2. `future hidden = None`
+
+其中第一类是硬约束，第二类是偏好约束。
+
+#### 1. 硬约束：必须让完整填写后失败
+
+每个 `decoy` 必须满足下面这条多阶段保证：
+
+- `历史 truth/decoy 组合 + 当前 decoy + 未来 hidden 全部取 truth -> global invalid`
+
+这里的“历史 truth/decoy 组合”指的是：之前所有 branch slots 可以保持 truth，也可以替换成它们各自已经生成出的 decoy，系统会枚举这些历史组合。只有当当前候选在这些组合下、并且未来 hidden slots 都填回 truth 时，都会触发至少一个 global constraint 违规，这个候选才算合格的 `decoy`。
+
+这条规则保证了：agent 在前面即使已经走错过一次或多次，只要当前再选到这个 `decoy`，当整张表最后被补全时，依然会在全局上失败。
+
+#### 2. 三级偏好：尽量让未填未来时仍然看起来合法
+
+除了上面的硬约束，生成器还会尽量满足 open-prefix 偏好，也就是把未来 hidden slots 暂时留空为 `None` 时，当前 `decoy` 不要过早暴露全局违规。
+
+默认参数 `--open-valid-preference-tries 30 50 70` 表示 3 个放松阶段：
+
+1. 前 `30` 次，优先满足：
+   `任意历史 truth/decoy 组合 + 当前 decoy + 未来 hidden=None -> global valid`
+2. 第 `31` 到 `50` 次，放松为只要求：
+   `前缀 truth + 后缀 decoy 组合 + 当前 decoy + 未来 hidden=None -> global valid`
+3. 第 `51` 到 `70` 次，再放松为只要求：
+   `全历史 truth + 当前 decoy + 未来 hidden=None -> global valid`
+4. 超过 `70` 次后，不再强求 `future hidden=None` 这类偏好，只保留前面的硬约束
+
+这 3 级偏好的直觉是：
+
+- 第 1 级最强，要求几乎所有历史 truth/decoy 混合路径下，当前 `decoy` 在“未来未填完”时都暂时看不出全局违规
+- 第 2 级稍弱，只覆盖一种更接近“沿路径逐步走错”的历史模式，也就是前面一段保持 truth，后面连续若干个 branch slots 已经选成 decoy
+- 第 3 级最弱，只要求“如果前面都还是 truth”，当前 `decoy` 在未来未填完时仍然 global valid
+
+因此，越早找到候选，`decoy` 的“迷惑性”越强；如果前面的偏好太严格导致难以采样，系统就逐步放松，避免数据完全生成不出来。
+
+#### 3. 为什么 `future=None` 时只检查部分 global 约束
+
+当未来 hidden slots 还是 `None` 时，生成器只会强检查那些“填得越多越容易违规”的 global 约束，比如上界类约束。对一些下界类约束，例如至少多少学分、至少多少个满足条件的 item，这时不会把“暂时没填够”当成失败，因为这些约束在未来补全 truth 后仍然可能满足。
+
+所以这里的 `global valid` 更准确地说，是“在当前前缀下，没有提前暴露出确定性的 global violation”。
+
+#### 4. 最后一个 branch slot 的特殊处理
+
+如果当前 slot 是最后一个 branch slot，那么后面已经没有未来 branch 决策了。这种情况下，代码会跳过上面的三级 `future hidden=None` 偏好，不再强求它在 open-prefix 场景里继续显得合法，而只保留那条核心硬约束：
+
+- `历史 truth/decoy 组合 + 当前 decoy + 未来 truth -> global invalid`
+
+由于此时未来 branch 路径已经结束，这样做能显著减少无解或极慢采样的情况。
+
+#### 5. Targeted Sampling
+
+为了避免完全靠拒绝采样反复碰运气，生成器不会纯随机瞎试。它会先根据当前历史上下文和 `global_constraints` 预计算一批 target specs，再优先把候选往更可能满足“full truth 时违规、future=None 时暂时合法”的方向去引导。
+
+通常它会优先利用上界类约束来构造 `decoy`，例如总 credit 不能超过多少、某个类别不能重复太多次。这类约束天然更适合做 branch decoy，因为：
+
+- 当未来 hidden slots 都补成 truth 时，更容易超过上界，形成稳定的 global invalid
+- 当未来 hidden slots 暂时是 `None` 时，总量通常会下降，又更容易保持暂时合法
+
+#### 6. Filter 候选和 Decoy 的区别
+
+- `truth_id`：当前 hidden slot 的正确答案
+- `decoy_ids`：满足当前 slot 的本地约束，但会在合适的全局组合下触发 global violation
+- `filter_candidate_ids`：直接不满足当前 slot 的本地约束，用来提供明显错误的干扰项
+
+可以把它理解成：
+
+- `filter` 是“本地就错”
+- `decoy` 是“本地像对的，但全局会错”
 
 这会生成类似这样的文件名：
 
@@ -43,7 +127,7 @@ python data_generation/generate.py --domain course --rows 5 --cols 5 --hidden-sl
 如果想一次生成所有场景，也可以用同样的尺寸设置：
 
 ```bash
-python data_generation/generate.py --all-domains --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 160 --candidate-resample-retries 12 --seed 42
+python data_generation/generate.py --all-domains --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 160 --candidate-resample-retries 12 --open-valid-preference-tries 30 50 70 --seed 42
 ```
 
 同一个 domain 的多个组合会被整合到同一个 JSON 文件里，顶层结构仍然是 `domain`、`num_instances`、`instances`。同一个固定尺寸下，不同隐藏设定的实例会一起放在 `instances` 中，每个实例自己的 `meta` 里保留对应的 `rows`、`cols`、`hidden_slots`、`branch_budget` 和 `candidates_per_slot`。

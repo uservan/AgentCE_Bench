@@ -19,9 +19,10 @@ class BaseToolsHandler:
     def __init__(self):
         self.tools: dict[str, Callable[..., Any]] = {
             "set_slot": self.set_slot,
+            "goto_slot": self.goto_slot,
             "get_current_grid_state": self.get_current_grid_state,
-            "get_current_target_slot": self.get_current_target_slot,
-            "get_previous_target_slot": self.get_previous_target_slot,
+            "get_target_slot": self.get_target_slot,
+            "get_history_target_slots": self.get_history_target_slots,
             "get_slot_id": self.get_slot_id,
             "done": self.done,
         }
@@ -70,12 +71,14 @@ class BaseToolsHandler:
         path_state = task.get_path_state()
         current_slot = path_state.get("current_slot")
         previous_slot = path_state.get("previous_slot")
+        next_slot = path_state.get("next_slot")
+        history_slots = path_state.get("history_slots")
         return Messages.build_failure_message(
             ErrorType.INVALID_ARGUMENTS,
             (
                 f"Hidden slot (row={row}, col={col}) is not accessible yet. "
                 "Follow the hidden-slot path and only work on the current target slot. "
-                "The only rollback allowed is clearing the previous hidden slot via `set_slot`. "
+                "Use `get_target_slot` or `get_history_target_slots` to inspect valid navigation targets, and use `goto_slot` to navigate. "
                 f"Current target: {current_slot}. Previous slot: {previous_slot}."
             ),
         )
@@ -142,6 +145,54 @@ class BaseToolsHandler:
         if include_reason:
             payload["reason"] = reason
         return Messages.build_success_message(payload)
+
+    def _current_slot_is_valid_for_navigation(self) -> tuple[bool, Messages | None]:
+        task = self.current_task
+        if task is None:
+            return False, Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
+        current_target = task.get_current_target_slot()
+        if current_target is None:
+            return False, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "There is no current hidden slot to validate.",
+            )
+        row = current_target["row"]
+        col = current_target["col"]
+        if task.agent_solution[row][col] is None:
+            return False, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "The current hidden slot must be filled before moving to the next slot.",
+            )
+        dataset = task.dataset_object
+        hidden_slot = next(
+            (slot for slot in dataset.slots if slot.get("row") == row and slot.get("col") == col),
+            None,
+        )
+        if hidden_slot is None:
+            return False, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"Current hidden slot (row={row}, col={col}) is missing from the dataset.",
+            )
+        try:
+            from data_generation.validation import validate_slot_constraints
+        except ImportError:
+            from validation import validate_slot_constraints  # type: ignore
+        is_valid, _ = validate_slot_constraints(
+            solution=task.agent_solution,
+            domain=dataset.domain,
+            row_index=row,
+            col_index=col,
+            slot_constraint=hidden_slot["slot_constraints"],
+            item_pool=dataset.item_pool,
+            slots=dataset.slots,
+            truth_solution=dataset.truth_solution,
+        )
+        if not is_valid:
+            return False, Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "The current hidden slot does not satisfy its slot constraints.",
+            )
+        return True, None
 
     def _get_allowed_lookup_item_ids(self) -> tuple[set[str], Messages | None]:
         dataset, error = self._get_current_dataset()
@@ -394,12 +445,15 @@ class BaseToolsHandler:
                 ErrorType.INVALID_ARGUMENTS,
                 "Slot constraint checks are only allowed for hidden slots.",
             )
+        slot_index = self.current_task.get_hidden_slot_index(row, col)
+        current_target = self.current_task.get_current_target_slot()
+        current_index = None if current_target is None else current_target["index"]
+        if slot_index is not None and current_index is not None and slot_index > current_index:
+            return self._build_slot_path_error(row, col)
         if self.current_task.agent_solution[row][col] is None:
-            return self._build_check_response(
-                row=row,
-                col=col,
-                is_valid=None,
-                reason="This hidden slot is still empty, so it cannot be checked yet.",
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"Slot (row={row}, col={col}) has not been filled yet.",
             )
 
         is_valid, reason = validate_slot_constraints(
@@ -426,6 +480,12 @@ class BaseToolsHandler:
         task = self.current_task
         if task is None:
             return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
+        solution = self.current_task.agent_solution
+        if any(item_id is None for row in solution for item_id in row):
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "The current grid must be fully filled before global constraints can be checked.",
+            )
         if not task.can_call_global_check():
             return Messages.build_failure_message(
                 ErrorType.INVALID_ARGUMENTS,
@@ -435,12 +495,6 @@ class BaseToolsHandler:
                 ),
             )
         task.record_global_check_call()
-        solution = self.current_task.agent_solution
-        if any(item_id is None for row in solution for item_id in row):
-            return self._build_check_response(
-                is_valid=False,
-                reason="The current grid is not fully filled yet.",
-            )
 
         try:
             from data_generation.validation import validate_global_constraints
@@ -494,54 +548,34 @@ class BaseToolsHandler:
         slot_index = task.get_hidden_slot_index(row, col)
         normalized_id = str(id) if id is not None and id != "" else None
         current_target = task.get_current_target_slot()
-        previous_target = task.get_previous_target_slot()
-
-        if normalized_id is None:
-            if current_target is not None and slot_index == current_target["index"] and solution[row][col] is None:
-                return Messages.build_failure_message(
-                    ErrorType.INVALID_ARGUMENTS,
-                    (
-                        f"Slot (row={row}, col={col}) is already empty. "
-                        "Please provide a concrete id for the current hidden slot, or clear the immediately previous hidden slot instead."
-                    ),
-                )
-            if previous_target is not None and slot_index == previous_target["index"]:
-                solution[row][col] = None
-                task.rollback_to_slot(row, col)
-                return Messages.build_success_message(
-                    {
-                        "row": row,
-                        "col": col,
-                        "id": solution[row][col],
-                        "message": "Previous hidden slot cleared. Rolled back to that slot.",
-                        "current_slot": task.get_current_target_slot(),
-                    }
-                )
-            return Messages.build_failure_message(
-                ErrorType.INVALID_ARGUMENTS,
-                (
-                    f"Slot (row={row}, col={col}) cannot be cleared. "
-                    "You may only clear the immediately previous hidden slot."
-                ),
-            )
-
-        access_error = self._ensure_hidden_slot_access(row, col)
-        if access_error is not None:
-            return access_error
-
         if current_target is None:
             return Messages.build_failure_message(
                 ErrorType.INVALID_ARGUMENTS,
                 "There is no current hidden slot to fill.",
             )
-
-        if current_target is None or slot_index != current_target["index"]:
+        if slot_index != current_target["index"]:
             return Messages.build_failure_message(
                 ErrorType.INVALID_ARGUMENTS,
                 (
                     f"Slot (row={row}, col={col}) is not the current target slot. "
-                    "Only the current hidden slot can be assigned a new id."
+                    "Only the current hidden slot can be changed with `set_slot`."
                 ),
+            )
+        if normalized_id is None:
+            if solution[row][col] is None:
+                return Messages.build_failure_message(
+                    ErrorType.INVALID_ARGUMENTS,
+                    f"Slot (row={row}, col={col}) is already empty.",
+                )
+            task.set_current_slot_value(None)
+            return Messages.build_success_message(
+                {
+                    "row": row,
+                    "col": col,
+                    "id": None,
+                    "message": "Current hidden slot cleared.",
+                    "current_slot": task.get_current_target_slot(),
+                }
             )
         allowed_ids = {hidden_slot.get("truth_id"), *hidden_slot.get("decoy_ids", [])}
         if normalized_id not in allowed_ids:
@@ -553,14 +587,13 @@ class BaseToolsHandler:
                 ),
             )
 
-        solution[row][col] = normalized_id
-        task.advance_after_current_slot_fill(row, col)
+        task.set_current_slot_value(normalized_id)
         return Messages.build_success_message(
             {
                 "row": row,
                 "col": col,
-                "id": solution[row][col],
-                "message": "Current hidden slot completed.",
+                "id": normalized_id,
+                "message": "Current hidden slot updated.",
                 "current_slot": task.get_current_target_slot(),
             }
         )
@@ -572,26 +605,91 @@ class BaseToolsHandler:
             return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
         return Messages.build_success_message({"slots": task.agent_solution})
 
-    def get_current_target_slot(self) -> Messages:
-        """Get the current hidden slot position."""
+    def get_target_slot(self, direction: str) -> Messages:
+        """Get the current, previous, or next hidden slot position.
+
+        direction: One of `current`, `previous`, or `next`.
+        """
         task = self.current_task
         if task is None:
             return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
+        if direction not in {"current", "previous", "next"}:
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "direction must be one of: current, previous, next",
+            )
         return Messages.build_success_message(
             {
-                "current_slot": task.get_current_target_slot(),
+                "direction": direction,
+                "target_slot": task.get_target_slot(direction),
             }
         )
 
-    def get_previous_target_slot(self) -> Messages:
-        """Get the previous hidden slot position."""
+    def get_history_target_slots(self) -> Messages:
+        """Get all historical hidden slots before the current target slot."""
         task = self.current_task
         if task is None:
             return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
         return Messages.build_success_message(
             {
-                "previous_slot": task.get_previous_target_slot(),
+                "history_slots": task.get_history_target_slots(),
             }
+        )
+
+    def goto_slot(self, row: int, col: int) -> Messages:
+        """Move to the next hidden slot or roll back to a historical hidden slot.
+
+        row: Row index of the target hidden slot.
+        col: Column index of the target hidden slot.
+        """
+        task = self.current_task
+        if task is None:
+            return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "No current task")
+        try:
+            row, col = int(row), int(col)
+        except (TypeError, ValueError):
+            return Messages.build_failure_message(ErrorType.INVALID_ARGUMENTS, "row and col must be integers")
+        slot_index = task.get_hidden_slot_index(row, col)
+        if slot_index is None:
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                f"Slot (row={row}, col={col}) is not a hidden slot in the path.",
+            )
+        if task.is_next_hidden_slot(row, col):
+            is_valid, navigation_error = self._current_slot_is_valid_for_navigation()
+            if not is_valid:
+                return navigation_error
+            task.move_to_next_slot()
+            return Messages.build_success_message(
+                {
+                    "row": row,
+                    "col": col,
+                    "message": "Moved to the next hidden slot.",
+                    "current_slot": task.get_current_target_slot(),
+                }
+            )
+        if task.is_historical_hidden_slot(row, col):
+            task.rollback_to_slot(row, col)
+            return Messages.build_success_message(
+                {
+                    "row": row,
+                    "col": col,
+                    "message": "Rolled back to a previous hidden slot and cleared it and all later hidden slots.",
+                    "current_slot": task.get_current_target_slot(),
+                }
+            )
+        if task.is_current_hidden_slot(row, col):
+            return Messages.build_failure_message(
+                ErrorType.INVALID_ARGUMENTS,
+                "Slot (row={row}, col={col}) is already the current target slot.".format(row=row, col=col),
+            )
+        next_target = task.get_next_target_slot()
+        return Messages.build_failure_message(
+            ErrorType.INVALID_ARGUMENTS,
+            (
+                f"Slot (row={row}, col={col}) is not a valid navigation target. "
+                f"You may only move to the next hidden slot {next_target} or roll back to a historical hidden slot."
+            ),
         )
 
     def get_slot_id(self, row: int, col: int) -> Messages:
