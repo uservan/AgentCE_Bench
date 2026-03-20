@@ -19,7 +19,7 @@ if __name__ == "__main__":
             "min_p": 0.0,
             "presence_penalty": 0.0,
             "repetition_penalty": 1.0,
-            "max_tokens": 4*1024,   # 限制单步输出，避免单次生成过长
+            "max_tokens": 16*1024,   # 限制单步输出，避免单次生成过长
             "timeout": 120,       # 单次请求超时（秒），防止卡死
         },
         max_steps=200,  # 复杂任务可降到 50
@@ -32,7 +32,9 @@ if __name__ == "__main__":
         overwrite_results=False,
         check_include_reason=False,
         global_check_alpha=1,
+        extra_query_num=10,
         seed=42,
         hidden_slots=[1,5,9,13],   # 先跑简单任务；h5_b8 等复杂任务会很慢
         branch_budget=[0,4,8,10],
+        max_workers=16,
     )

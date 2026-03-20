@@ -1,6 +1,8 @@
 import json
 import os
 import random
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable
 
 from .agent import Agent
@@ -22,9 +24,11 @@ class CacheEnv:
         max_query_fields: int = 6,
         check_include_reason: bool = False,
         global_check_alpha: float | None = 1,
+        extra_query_num: int = 2,
         benchmark_config: dict[str, Any] | None = None,
         overwrite_results: bool = False,
         seed: int = 42,
+        max_workers: int = 25,
     ):
         self.dataset_objects = dataset_objects
         self.max_steps = max_steps
@@ -35,8 +39,10 @@ class CacheEnv:
         self.max_query_fields = max_query_fields
         self.check_include_reason = check_include_reason
         self.global_check_alpha = global_check_alpha
+        self.extra_query_num = extra_query_num
         self.benchmark_config = dict(benchmark_config or {})
         self.overwrite_results = overwrite_results
+        self.max_workers = max_workers
         random.seed(seed)
         self.seeds = [random.randint(0, 1000000) for _ in range(num_trials)]
 
@@ -64,138 +70,141 @@ class CacheEnv:
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
     ):
         """
-        遍历 dataset_objects，执行全部 task，汇总结果并保存到 JSON 文件。
+        遍历 dataset_objects，并行执行全部 task，汇总结果并保存到 JSON 文件。
         """
         total_runs = self.get_total_runs()
         output_root = self._resolve_output_root(save_path)
-        saved_paths: list[str] = []
-        numeric_scores: list[float] = []
-        usage_totals: dict[str, float] = {}
-        usage_counts: dict[str, int] = {}
-        reused_cached_runs = 0
+
+        # Collect all jobs upfront to assign run_index deterministically
+        jobs = []
         run_index = 0
         for dataset_obj in self.dataset_objects:
             for tool_failure_rate in self.tool_failure_rates:
                 for trial_index, seed in enumerate(self.seeds, start=1):
                     run_index += 1
-                    output_path = self._build_output_path(
-                        save_root=output_root,
-                        model_name=agent.model,
-                        instance_id=getattr(dataset_obj, "instance_id", ""),
-                        max_query_ids=self.max_query_ids,
-                        max_query_fields=self.max_query_fields,
-                        tool_failure_rate=tool_failure_rate,
-                        trial_index=trial_index,
-                    )
-                    task = Task(
-                        dataset_object=dataset_obj,
-                        max_steps=self.max_steps,
-                        tool_failure_rate=tool_failure_rate,
-                        tools_domain_only=self.tools_domain_only,
-                        max_query_ids=self.max_query_ids,
-                        max_query_fields=self.max_query_fields,
-                        check_include_reason=self.check_include_reason,
-                        global_check_alpha=self.global_check_alpha,
-                        seed=seed,
-                    )
-                    if progress_callback is not None:
-                        progress_callback(
-                            {
-                                "stage": "start",
-                                "run_index": run_index,
-                                "total_runs": total_runs,
-                                "domain": dataset_obj.domain,
-                                "instance_id": getattr(dataset_obj, "instance_id", ""),
-                                "tool_failure_rate": tool_failure_rate,
-                                "trial_index": trial_index,
-                                "num_trials": self.num_trials,
-                                "seed": seed,
-                                "save_path": output_root,
-                            }
+                    jobs.append((dataset_obj, tool_failure_rate, trial_index, seed, run_index))
+
+        saved_paths: list[str] = []
+        numeric_scores: list[float] = []
+        usage_totals: dict[str, float] = {}
+        usage_counts: dict[str, int] = {}
+        reused_cached_runs_box = [0]
+        lock = threading.Lock()
+
+        def run_one(job):
+            dataset_obj, tool_failure_rate, trial_index, seed, run_idx = job
+            output_path = self._build_output_path(
+                save_root=output_root,
+                model_name=agent.model,
+                instance_id=getattr(dataset_obj, "instance_id", ""),
+                max_query_ids=self.max_query_ids,
+                max_query_fields=self.max_query_fields,
+                extra_query_num=self.extra_query_num,
+                tool_failure_rate=tool_failure_rate,
+                trial_index=trial_index,
+            )
+            task = Task(
+                dataset_object=dataset_obj,
+                max_steps=self.max_steps,
+                tool_failure_rate=tool_failure_rate,
+                tools_domain_only=self.tools_domain_only,
+                max_query_ids=self.max_query_ids,
+                max_query_fields=self.max_query_fields,
+                check_include_reason=self.check_include_reason,
+                global_check_alpha=self.global_check_alpha,
+                extra_query_num=self.extra_query_num,
+                seed=seed,
+            )
+            event_base = {
+                "run_index": run_idx,
+                "total_runs": total_runs,
+                "domain": dataset_obj.domain,
+                "instance_id": getattr(dataset_obj, "instance_id", ""),
+                "tool_failure_rate": tool_failure_rate,
+                "trial_index": trial_index,
+                "num_trials": self.num_trials,
+                "seed": seed,
+            }
+            if progress_callback is not None:
+                with lock:
+                    progress_callback({**event_base, "stage": "start", "save_path": output_root})
+
+            if not self.overwrite_results and os.path.exists(output_path):
+                cached_payload = self._load_cached_run_payload(output_path)
+                if self._is_matching_cached_payload(
+                    cached_payload=cached_payload,
+                    model_name=agent.model,
+                    instance_id=getattr(dataset_obj, "instance_id", ""),
+                    max_query_ids=self.max_query_ids,
+                    max_query_fields=self.max_query_fields,
+                    check_include_reason=self.check_include_reason,
+                    global_check_alpha=self.global_check_alpha,
+                    extra_query_num=self.extra_query_num,
+                    tool_failure_rate=tool_failure_rate,
+                    trial_index=trial_index,
+                    seed=seed,
+                ):
+                    cached_run_result = cached_payload.get("run_result", {})
+                    numeric_score = self._extract_numeric_score(cached_run_result.get("score"))
+                    with lock:
+                        saved_paths.append(output_path)
+                        reused_cached_runs_box[0] += 1
+                        if numeric_score is not None:
+                            numeric_scores.append(numeric_score)
+                        self._accumulate_usage(
+                            usage=cached_run_result.get("usage", {}),
+                            usage_totals=usage_totals,
+                            usage_counts=usage_counts,
                         )
-                    if not self.overwrite_results and os.path.exists(output_path):
-                        cached_payload = self._load_cached_run_payload(output_path)
-                        if self._is_matching_cached_payload(
-                            cached_payload=cached_payload,
-                            model_name=agent.model,
-                            instance_id=getattr(dataset_obj, "instance_id", ""),
-                            max_query_ids=self.max_query_ids,
-                            max_query_fields=self.max_query_fields,
-                            check_include_reason=self.check_include_reason,
-                            global_check_alpha=self.global_check_alpha,
-                            tool_failure_rate=tool_failure_rate,
-                            trial_index=trial_index,
-                            seed=seed,
-                        ):
-                            saved_paths.append(output_path)
-                            reused_cached_runs += 1
-                            cached_run_result = cached_payload.get("run_result", {})
-                            numeric_score = self._extract_numeric_score(cached_run_result.get("score"))
-                            if numeric_score is not None:
-                                numeric_scores.append(numeric_score)
-                            self._accumulate_usage(
-                                usage=cached_run_result.get("usage", {}),
-                                usage_totals=usage_totals,
-                                usage_counts=usage_counts,
-                            )
-                            if progress_callback is not None:
-                                progress_callback(
-                                    {
-                                        "stage": "cached",
-                                        "run_index": run_index,
-                                        "total_runs": total_runs,
-                                        "domain": dataset_obj.domain,
-                                        "instance_id": getattr(dataset_obj, "instance_id", ""),
-                                        "tool_failure_rate": tool_failure_rate,
-                                        "trial_index": trial_index,
-                                        "num_trials": self.num_trials,
-                                        "seed": seed,
-                                        "status": cached_run_result.get("status"),
-                                        "result": cached_run_result.get("result"),
-                                        "save_path": output_path,
-                                    }
-                                )
-                            continue
-                    run_result = self.run_task(task, agent)
-                    saved_file_path = self._save_run_result(
-                        run_result=run_result,
-                        output_path=output_path,
-                        instance_id=getattr(dataset_obj, "instance_id", ""),
-                        max_query_ids=task.max_query_ids,
-                        max_query_fields=task.max_query_fields,
-                        check_include_reason=task.check_include_reason,
-                        global_check_alpha=task.global_check_alpha,
-                        model_name=agent.model,
-                        tool_failure_rate=tool_failure_rate,
-                        trial_index=trial_index,
-                        seed=seed,
-                    )
-                    saved_paths.append(saved_file_path)
-                    numeric_score = self._extract_numeric_score(run_result.score)
-                    if numeric_score is not None:
-                        numeric_scores.append(numeric_score)
-                    self._accumulate_usage(
-                        usage=run_result.usage,
-                        usage_totals=usage_totals,
-                        usage_counts=usage_counts,
-                    )
-                    if progress_callback is not None:
-                        progress_callback(
-                            {
-                                "stage": "finish",
-                                "run_index": run_index,
-                                "total_runs": total_runs,
-                                "domain": dataset_obj.domain,
-                                "instance_id": getattr(dataset_obj, "instance_id", ""),
-                                "tool_failure_rate": tool_failure_rate,
-                                "trial_index": trial_index,
-                                "num_trials": self.num_trials,
-                                "seed": seed,
-                                "status": run_result.status,
-                                "result": run_result.result,
-                                "save_path": saved_file_path,
-                            }
-                        )
+                        if progress_callback is not None:
+                            progress_callback({
+                                **event_base,
+                                "stage": "cached",
+                                "status": cached_run_result.get("status"),
+                                "result": cached_run_result.get("result"),
+                                "save_path": output_path,
+                            })
+                    return
+
+            run_result = self.run_task(task, agent)
+            saved_file_path = self._save_run_result(
+                run_result=run_result,
+                output_path=output_path,
+                instance_id=getattr(dataset_obj, "instance_id", ""),
+                max_query_ids=task.max_query_ids,
+                max_query_fields=task.max_query_fields,
+                check_include_reason=task.check_include_reason,
+                global_check_alpha=task.global_check_alpha,
+                extra_query_num=task.extra_query_num,
+                model_name=agent.model,
+                tool_failure_rate=tool_failure_rate,
+                trial_index=trial_index,
+                seed=seed,
+            )
+            numeric_score = self._extract_numeric_score(run_result.score)
+            with lock:
+                saved_paths.append(saved_file_path)
+                if numeric_score is not None:
+                    numeric_scores.append(numeric_score)
+                self._accumulate_usage(
+                    usage=run_result.usage,
+                    usage_totals=usage_totals,
+                    usage_counts=usage_counts,
+                )
+                if progress_callback is not None:
+                    progress_callback({
+                        **event_base,
+                        "stage": "finish",
+                        "status": run_result.status,
+                        "result": run_result.result,
+                        "save_path": saved_file_path,
+                    })
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = [executor.submit(run_one, job) for job in jobs]
+            for future in as_completed(futures):
+                future.result()  # re-raise any task exception
+
         average_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else None
         average_usage = {
             key: usage_totals[key] / usage_counts[key]
@@ -208,7 +217,7 @@ class CacheEnv:
             "average_usage": average_usage,
             "scored_runs": len(numeric_scores),
             "total_runs": total_runs,
-            "cached_runs": reused_cached_runs,
+            "cached_runs": reused_cached_runs_box[0],
         }
 
     def _resolve_output_root(self, save_path: str) -> str:
@@ -224,6 +233,7 @@ class CacheEnv:
         instance_id: str,
         max_query_ids: int,
         max_query_fields: int,
+        extra_query_num: int,
         tool_failure_rate: float,
         trial_index: int,
     ) -> str:
@@ -236,6 +246,7 @@ class CacheEnv:
             instance_id=instance_id,
             max_query_ids=max_query_ids,
             max_query_fields=max_query_fields,
+            extra_query_num=extra_query_num,
         )
         return os.path.join(save_root, model_dir_name, result_instance_id, file_name)
 
@@ -248,6 +259,7 @@ class CacheEnv:
         max_query_fields: int,
         check_include_reason: bool,
         global_check_alpha: float | None,
+        extra_query_num: int,
         model_name: str,
         tool_failure_rate: float,
         trial_index: int,
@@ -257,6 +269,7 @@ class CacheEnv:
             instance_id=instance_id,
             max_query_ids=max_query_ids,
             max_query_fields=max_query_fields,
+            extra_query_num=extra_query_num,
         )
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -269,6 +282,7 @@ class CacheEnv:
             "max_query_fields": max_query_fields,
             "check_include_reason": check_include_reason,
             "global_check_alpha": global_check_alpha,
+            "extra_query_num": extra_query_num,
             "tool_failure_rate": tool_failure_rate,
             "trial_index": trial_index,
             "seed": seed,
@@ -292,6 +306,7 @@ class CacheEnv:
         max_query_fields: int,
         check_include_reason: bool,
         global_check_alpha: float | None,
+        extra_query_num: int,
         tool_failure_rate: float,
         trial_index: int,
         seed: int,
@@ -303,6 +318,7 @@ class CacheEnv:
             and cached_payload.get("max_query_fields") == max_query_fields
             and cached_payload.get("check_include_reason", False) == check_include_reason
             and cached_payload.get("global_check_alpha") == global_check_alpha
+            and cached_payload.get("extra_query_num", 2) == extra_query_num
             and cached_payload.get("tool_failure_rate") == tool_failure_rate
             and cached_payload.get("trial_index") == trial_index
             and cached_payload.get("seed") == seed
@@ -318,8 +334,9 @@ class CacheEnv:
         instance_id: str,
         max_query_ids: int,
         max_query_fields: int,
+        extra_query_num: int = 2,
     ) -> str:
-        return f"{instance_id}_ids{max_query_ids}_fields{max_query_fields}"
+        return f"{instance_id}_ids{max_query_ids}_fields{max_query_fields}_eq{extra_query_num}"
 
     def _extract_numeric_score(self, score: Any) -> float | None:
         if isinstance(score, (int, float)):

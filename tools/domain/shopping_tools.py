@@ -12,20 +12,30 @@ class ShoppingToolsHandler(BaseToolsHandler):
     def __init__(self):
         super().__init__()
         self.tools.update({
-            "query_shopping_slot_candidates": self.query_shopping_slot_candidates,
+            "query_shopping_candidate_from_attribute": self.query_shopping_candidate_from_attribute,
             "get_shopping_item_info": self.get_shopping_item_info,
             "get_shopping_item_attributes": self.get_shopping_item_attributes,
             "check_shopping_slot_constraints": self.check_shopping_slot_constraints,
             "check_shopping_global_constraints": self.check_shopping_global_constraints,
         })
 
-    def query_shopping_slot_candidates(self, row: int, col: int) -> Messages:
-        """Return candidate ids, names, and categories for a shopping slot.
+    def query_shopping_candidate_from_attribute(
+        self,
+        row: int,
+        col: int,
+        field: str,
+        operator: str,
+        value: str | int | float | list[str],
+    ) -> Messages:
+        """Filter current-slot shopping candidates by one attribute condition.
 
         row: Row index as an integer.
         col: Column index as an integer.
+        field: One attribute name to filter on.
+        operator: For numeric fields use one of `>`, `>=`, `=`, `<`, `<=`; for categorical fields use `in` or `not_in`.
+        value: One numeric comparison value, or a string list for `in`/`not_in`.
         """
-        return self._query_slot_candidates(row, col, summary_fields=["name", "category"])
+        return self._query_candidate_from_attribute(row, col, field, operator, value)
 
     def get_shopping_item_info(self, id: str) -> Messages:
         """Return full shopping item information for one id.

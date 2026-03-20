@@ -21,6 +21,8 @@ DEFAULT_SAVE_PATH = "output.json"
 DEFAULT_OVERWRITE_RESULTS = False
 DEFAULT_DOMAIN = ["all"]
 DEFAULT_DOMAIN_FALLBACK = ["course"]
+DEFAULT_EXTRA_QUERY_NUM = 2
+DEFAULT_MAX_WORKERS = 25
 
 
 def parse_list_arg(value, item_type):
@@ -59,7 +61,9 @@ def main(
     branch_budget=None,
     check_include_reason=False,
     global_check_alpha=1,
+    extra_query_num=DEFAULT_EXTRA_QUERY_NUM,
     seed=DEFAULT_SEED,
+    max_workers=DEFAULT_MAX_WORKERS,
 ):
     """
     组装 dataset、agent、cache env，并执行完整流程。
@@ -88,6 +92,8 @@ def main(
         raise ValueError("max_query_fields must be positive")
     if global_check_alpha is not None and global_check_alpha < 0:
         raise ValueError("global_check_alpha must be non-negative")
+    if extra_query_num < 0:
+        raise ValueError("extra_query_num must be non-negative")
 
     ConsoleDisplay.print_kv_panel(
         title="[bold green]Benchmark Run Configuration[/bold green]",
@@ -106,6 +112,8 @@ def main(
             ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
             ("Check Include Reason", check_include_reason),
             ("Global Check Alpha", global_check_alpha),
+            ("Extra Query Num", extra_query_num),
+            ("Max Workers", max_workers),
             ("Save Path", save_path),
             ("Seed", seed),
             ("Dataset Objects", len(dataset_objects)),
@@ -142,6 +150,7 @@ def main(
         max_query_fields=max_query_fields,
         check_include_reason=check_include_reason,
         global_check_alpha=global_check_alpha,
+        extra_query_num=extra_query_num,
         benchmark_config={
             "model": model,
             "domain": list(domain),
@@ -159,10 +168,12 @@ def main(
             "branch_budget": list(branch_budget) if branch_budget else None,
             "check_include_reason": check_include_reason,
             "global_check_alpha": global_check_alpha,
+            "extra_query_num": extra_query_num,
             "seed": seed,
         },
         overwrite_results=overwrite_results,
         seed=seed,
+        max_workers=max_workers,
     )
     agent = Agent(model=model, **(agent_params or {}))
     total_runs = cache_env.get_total_runs()
@@ -180,6 +191,7 @@ def main(
             ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
             ("Check Include Reason", check_include_reason),
             ("Global Check Alpha", global_check_alpha),
+            ("Extra Query Num", extra_query_num),
             ("Save Path", save_path),
         ],
         border_style="yellow",
@@ -257,6 +269,7 @@ def main(
         "overwrite_results": overwrite_results,
         "hidden_slots": hidden_slots,
         "branch_budget": branch_budget,
+        "extra_query_num": extra_query_num,
         "save_path": save_path,
         "status": "Completed",
     }
@@ -286,6 +299,7 @@ def main(
             ("Branch Budget Filter", str(branch_budget) if branch_budget else "-"),
             ("Check Include Reason", check_include_reason),
             ("Global Check Alpha", global_check_alpha),
+            ("Extra Query Num", extra_query_num),
             ("Save Path", save_path),
             ("Status", "[green]Completed[/green]"),
         ],
@@ -393,6 +407,20 @@ def parse_args():
         default=1,
         help="限制 global constraints 调用次数，budget = floor(alpha * hidden_slots)；默认 1",
     )
+    parser.add_argument(
+        "--extra-query-num",
+        dest="extra_query_num",
+        type=int,
+        default=DEFAULT_EXTRA_QUERY_NUM,
+        help="每个 hidden slot 的 attribute query 次数在 (slot_constraints + hidden_slots) 基础上额外增加的数量；默认 2",
+    )
+    parser.add_argument(
+        "--max-workers",
+        dest="max_workers",
+        type=int,
+        default=DEFAULT_MAX_WORKERS,
+        help="并行运行的最大 task 数量；默认 25",
+    )
     return parser.parse_args()
 
 
@@ -416,5 +444,7 @@ if __name__ == "__main__":
         branch_budget=args.branch_budget if args.branch_budget else None,
         check_include_reason=args.check_include_reason,
         global_check_alpha=args.global_check_alpha,
+        extra_query_num=args.extra_query_num,
         seed=args.seed,
+        max_workers=args.max_workers,
     )

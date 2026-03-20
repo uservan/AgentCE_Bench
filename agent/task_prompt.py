@@ -40,8 +40,7 @@ BENCHMARK_SYSTEM_PROMPT = """
 
 def build_initial_messages(task: Any) -> list[dict[str, Any]]:
     """为 benchmark task 构建初始消息。"""
-    target_tool = "get_target_slot"
-    history_tool = "get_history_target_slots"
+    attribute_query_tool = f"query_{getattr(task.dataset_object, 'domain', 'course')}_candidate_from_attribute"
     system_content = BENCHMARK_SYSTEM_PROMPT.format(
         agent_instruction=build_agent_instruction(task),
         tool_usage=build_tool_usage_instruction(task),
@@ -56,10 +55,9 @@ def build_initial_messages(task: Any) -> list[dict[str, Any]]:
         "Here is the current partial solution grid.\n"
         "Each `null` value is a missing slot that still needs a valid item id.\n\n"
         f"{partial_repr}\n\n"
-        "You must follow the hidden-slot path in order.\nOnly the current target hidden slot may be queried, checked, or filled next. "
-        f"Use `{target_tool}` to inspect the current/previous/next target slots. "
-        f"Use `{history_tool}` to list the historical hidden slots that you may roll back to. "
-        "Use `set_slot` only to fill or clear the current hidden slot. Use `goto_slot` to move to the next hidden slot or roll back to a previous hidden slot."
+        "You may work on any hidden slot directly.\n"
+        f"Use `{attribute_query_tool}` to filter a hidden slot's candidates by one attribute condition. "
+        "Use `set_slot` to fill or clear any hidden slot."
     )
     return [
         {"role": "system", "content": system_content},
@@ -81,7 +79,8 @@ def build_agent_instruction(task: Any) -> str:
             "Follow the task policy exactly.",
             f"Each item in this domain has attributes such as: {item_attributes_text}.",
             "Use tools to inspect the current grid, reason about candidate ids, and update slots.",
-            "Work through the hidden slots strictly in path order. Focus on one hidden slot at a time, gather evidence for that slot, place a candidate, validate it, and only then move to the next hidden slot in the path.",
+            "Both attribute queries (per hidden slot) and global check have limited call counts—plan your usage carefully.",
+            "You may inspect and fill hidden slots in any order.",
             "Assume all pre-filled non-null slots are already correct, valid, and fixed.",
             "You must make sure the final solution satisfies every hidden-slot constraint and the global constraints.",
             "Never change pre-filled non-null slots unless a tool result or task policy clearly requires it.",
@@ -93,20 +92,19 @@ def build_agent_instruction(task: Any) -> str:
 def build_tool_usage_instruction(task: Any) -> str:
     domain = getattr(task.dataset_object, "domain", "course")
     multi_attr_tool = f"get_{domain}_item_attributes"
+    attribute_query_tool = f"query_{domain}_candidate_from_attribute"
     slot_tool = f"check_{domain}_slot_constraints"
     global_tool = f"check_{domain}_global_constraints"
-    target_tool = "get_target_slot"
-    history_tool = "get_history_target_slots"
-    goto_tool = "goto_slot"
     max_query_ids = getattr(task, "max_query_ids", 5)
     max_query_fields = getattr(task, "max_query_fields", 6)
     global_check_budget = getattr(task, "global_check_budget", None)
     guidance_lines = [
         "Use the available tools instead of pretending to know hidden slot values.",
-        f"Follow the hidden-slot path in order and complete the hidden slots one by one. Use `{target_tool}` with direction `current`, `previous`, or `next` to inspect nearby target positions. Use `{history_tool}` to list the historical hidden slots that are currently available for rollback. Use `set_slot` only to change the current hidden slot, and use `{goto_tool}` to navigate.",
-        f"To move forward with `{goto_tool}`, first fill the current hidden slot. To roll back, call `{goto_tool}` with one of the coordinates returned by `{history_tool}`; that rollback clears the target hidden slot and every hidden slot after it.",
-        f"Each hidden slot has multiple options. Your choice for each slot must satisfy the corresponding slot constraints, and the completed grid must satisfy the global constraints. Use `{slot_tool}` when needed for the current hidden slot or already filled earlier hidden slots, and use `{global_tool}` only after all slots are filled.",
-        f"Use the single-item info tool when you need all attributes for one item id. Use `{multi_attr_tool}` when you want up to {max_query_fields} selected attributes for up to {max_query_ids} item ids at once.",
+        "You may inspect and fill hidden slots in any order.",
+        f"Use `set_slot` to fill or clear any hidden slot directly by row and col.",
+        f"Each hidden slot has multiple options. Your choice for each slot must satisfy the corresponding slot constraints, and the completed grid must satisfy the global constraints. Use `{slot_tool}` when needed for any filled hidden slot, and use `{global_tool}` only after all slots are filled.",
+        f"Use `{attribute_query_tool}` when you want to filter one hidden slot's candidates by one attribute condition. Item info tools (single-item info and `{multi_attr_tool}`) can only query non-hidden item ids—i.e., ids that are already visible in pre-filled slots. Use the single-item info tool for one such id; use `{multi_attr_tool}` for up to {max_query_fields} selected attributes for up to {max_query_ids} such ids at once.",
+        "Use `get_hidden_slot_query_budget` with row and col to query the remaining attribute-query count for a specific hidden slot (e.g. before deciding whether to make more attribute queries for that slot).",
         f"When the grid is complete and you are satisfied with the result, call `{STOP_FUNCTION_NAME}`.",
         f"Your final action must be a single call to `{STOP_FUNCTION_NAME}` with no other tool calls in that message.",
     ]
@@ -120,7 +118,7 @@ def build_tool_usage_instruction(task: Any) -> str:
         )
     else:
         guidance_lines.append(
-            f"`{global_tool}` may be called at most {global_check_budget} time(s) in this task."
+            f"`{global_tool}` may be called at most {global_check_budget} time(s) in this task. Use `get_global_check_budget` to query the remaining global-check count."
         )
     return "\n".join(guidance_lines)
 

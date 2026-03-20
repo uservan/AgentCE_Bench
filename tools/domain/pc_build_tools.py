@@ -12,20 +12,30 @@ class PcBuildToolsHandler(BaseToolsHandler):
     def __init__(self):
         super().__init__()
         self.tools.update({
-            "query_pc_build_slot_candidates": self.query_pc_build_slot_candidates,
+            "query_pc_build_candidate_from_attribute": self.query_pc_build_candidate_from_attribute,
             "get_pc_build_item_info": self.get_pc_build_item_info,
             "get_pc_build_item_attributes": self.get_pc_build_item_attributes,
             "check_pc_build_slot_constraints": self.check_pc_build_slot_constraints,
             "check_pc_build_global_constraints": self.check_pc_build_global_constraints,
         })
 
-    def query_pc_build_slot_candidates(self, row: int, col: int) -> Messages:
-        """Return candidate ids, names, and categories for a PC build slot.
+    def query_pc_build_candidate_from_attribute(
+        self,
+        row: int,
+        col: int,
+        field: str,
+        operator: str,
+        value: str | int | float | list[str],
+    ) -> Messages:
+        """Filter current-slot PC build candidates by one attribute condition.
 
         row: Row index as an integer.
         col: Column index as an integer.
+        field: One attribute name to filter on.
+        operator: For numeric fields use one of `>`, `>=`, `=`, `<`, `<=`; for categorical fields use `in` or `not_in`.
+        value: One numeric comparison value, or a string list for `in`/`not_in`.
         """
-        return self._query_slot_candidates(row, col, summary_fields=["name", "category"])
+        return self._query_candidate_from_attribute(row, col, field, operator, value)
 
     def get_pc_build_item_info(self, id: str) -> Messages:
         """Return full PC build item information for one id.

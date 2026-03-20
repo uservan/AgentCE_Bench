@@ -39,6 +39,13 @@ def _resolve_partial_solution(
     return copy.deepcopy(dataset_object.truth_solution)
 
 
+def _count_slot_query_budget(
+    slot: dict[str, Any], hidden_slot_count: int, extra_query_num: int = 0
+) -> int:
+    active_rule_names = slot.get("slot_constraints", {}).get("active_rule_names", [])
+    return len(active_rule_names) + hidden_slot_count + extra_query_num
+
+
 class Task:
     """Task 类，封装一次任务。"""
 
@@ -52,6 +59,7 @@ class Task:
         max_query_fields: int = DEFAULT_MAX_QUERY_FIELDS,
         check_include_reason: bool = False,
         global_check_alpha: float | None = 1,
+        extra_query_num: int = 2,
         seed: int | None = None,
     ):
         self.dataset_object: SavedDatasetObject = dataset_object
@@ -62,6 +70,7 @@ class Task:
         self.max_query_fields = max_query_fields
         self.check_include_reason = check_include_reason
         self.global_check_alpha = global_check_alpha
+        self.extra_query_num = extra_query_num
         self.seed = seed
         self.hidden_slots = copy.deepcopy(getattr(dataset_object, "hidden_slots", []))
         self.branch_budget = getattr(dataset_object, "branch_budget", None)
@@ -83,13 +92,24 @@ class Task:
             slot_position: index
             for index, slot_position in enumerate(self.hidden_slot_path)
         }
-        self.current_slot_index = 0
         self.global_check_budget = (
             None
             if global_check_alpha is None
             else max(0, int(global_check_alpha * len(self.hidden_slot_path)))
         )
         self.global_check_calls = 0
+        self.hidden_slot_query_budget: dict[tuple[int, int], int] = {}
+        self.hidden_slot_query_calls: dict[tuple[int, int], int] = {}
+        total_hidden_slot_count = len(self.hidden_slot_path)
+        for slot in getattr(dataset_object, "slots", []):
+            row = slot.get("row")
+            col = slot.get("col")
+            if not isinstance(row, int) or not isinstance(col, int):
+                continue
+            slot_position = (row, col)
+            budget = max(0, _count_slot_query_budget(slot, total_hidden_slot_count, extra_query_num))
+            self.hidden_slot_query_budget[slot_position] = budget
+            self.hidden_slot_query_calls[slot_position] = 0
 
     def build_initial_messages(self) -> list[dict[str, Any]]:
         """构建初始消息列表。"""
@@ -162,138 +182,33 @@ class Task:
     def get_hidden_slot_index(self, row: int, col: int) -> int | None:
         return self.hidden_slot_index_map.get((row, col))
 
-    def _build_slot_descriptor(self, slot_index: int) -> dict[str, int] | None:
-        if slot_index < 0 or slot_index >= len(self.hidden_slot_path):
-            return None
-        row, col = self.hidden_slot_path[slot_index]
-        return {
-            "index": slot_index,
-            "row": row,
-            "col": col,
-        }
-
-    def get_current_target_slot(self) -> dict[str, int] | None:
-        return self._build_slot_descriptor(self.current_slot_index)
-
-    def get_previous_target_slot(self) -> dict[str, int] | None:
-        return self._build_slot_descriptor(self.current_slot_index - 1)
-
-    def get_next_target_slot(self) -> dict[str, int] | None:
-        return self._build_slot_descriptor(self.current_slot_index + 1)
-
-    def get_target_slot(self, direction: str) -> dict[str, int] | None:
-        if direction == "current":
-            return self.get_current_target_slot()
-        if direction == "previous":
-            return self.get_previous_target_slot()
-        if direction == "next":
-            return self.get_next_target_slot()
-        return None
-
-    def get_remaining_hidden_slots(self) -> list[dict[str, int]]:
-        remaining: list[dict[str, int]] = []
-        for index, (row, col) in enumerate(self.hidden_slot_path[self.current_slot_index:], start=self.current_slot_index):
-            remaining.append(
-                {
-                    "index": index,
-                    "row": row,
-                    "col": col,
-                }
-            )
-        return remaining
-
-    def get_history_target_slots(self) -> list[dict[str, int]]:
-        history: list[dict[str, int]] = []
-        for index, (row, col) in enumerate(self.hidden_slot_path[:self.current_slot_index]):
-            history.append(
-                {
-                    "index": index,
-                    "row": row,
-                    "col": col,
-                }
-            )
-        return history
-
-    def get_path_state(self) -> dict[str, Any]:
-        return {
-            "current_slot_index": self.current_slot_index,
-            "current_slot": self.get_current_target_slot(),
-            "previous_slot": self.get_previous_target_slot(),
-            "next_slot": self.get_next_target_slot(),
-            "history_slots": self.get_history_target_slots(),
-            "remaining_slots": self.get_remaining_hidden_slots(),
-            "slot_path": [
-                {
-                    "index": index,
-                    "row": row,
-                    "col": col,
-                }
-                for index, (row, col) in enumerate(self.hidden_slot_path)
-            ],
-        }
-
-    def can_access_hidden_slot(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
+    def can_call_hidden_slot_query(self, row: int, col: int) -> bool:
+        slot_position = (row, col)
+        if slot_position not in self.hidden_slot_query_budget:
             return False
-        return slot_index == self.current_slot_index
+        return self.hidden_slot_query_calls.get(slot_position, 0) < self.hidden_slot_query_budget[slot_position]
 
-    def is_current_hidden_slot(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
-            return False
-        return slot_index == self.current_slot_index
-
-    def is_previous_hidden_slot(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
-            return False
-        previous_slot = self.get_previous_target_slot()
-        if previous_slot is None:
-            return False
-        return slot_index == previous_slot["index"]
-
-    def is_historical_hidden_slot(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
-            return False
-        return slot_index < self.current_slot_index
-
-    def is_next_hidden_slot(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
-            return False
-        return slot_index == self.current_slot_index + 1
-
-    def set_current_slot_value(self, id: str | None) -> bool:
-        current_slot = self.get_current_target_slot()
-        if current_slot is None:
-            return False
-        self.agent_solution[current_slot["row"]][current_slot["col"]] = id
-        return True
-
-    def clear_slots_from(self, row: int, col: int) -> bool:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
-            return False
-        for clear_index in range(slot_index, len(self.hidden_slot_path)):
-            clear_row, clear_col = self.hidden_slot_path[clear_index]
-            self.agent_solution[clear_row][clear_col] = None
-        return True
-
-    def move_to_next_slot(self) -> bool:
-        next_slot = self.get_next_target_slot()
-        if next_slot is None:
-            return False
-        self.current_slot_index = next_slot["index"]
-        return True
-
-    def rollback_to_slot(self, row: int, col: int) -> None:
-        slot_index = self.get_hidden_slot_index(row, col)
-        if slot_index is None:
+    def record_hidden_slot_query_call(self, row: int, col: int) -> None:
+        slot_position = (row, col)
+        if slot_position not in self.hidden_slot_query_calls:
             return
-        self.clear_slots_from(row, col)
-        self.current_slot_index = slot_index
+        self.hidden_slot_query_calls[slot_position] += 1
+
+    def get_remaining_hidden_slot_queries(self, row: int, col: int) -> int | None:
+        slot_position = (row, col)
+        if slot_position not in self.hidden_slot_query_budget:
+            return None
+        return max(
+            0,
+            self.hidden_slot_query_budget[slot_position] - self.hidden_slot_query_calls.get(slot_position, 0),
+        )
+
+    def get_global_check_budget_status(self) -> dict[str, int | None]:
+        return {
+            "remaining_global_checks": self.get_remaining_global_checks(),
+            "global_check_budget": self.global_check_budget,
+            "global_check_calls": self.global_check_calls,
+        }
 
     def can_call_global_check(self) -> bool:
         if self.global_check_budget is None:
