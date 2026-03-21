@@ -88,54 +88,68 @@ def view_eval_results() -> None:
             return
 
         while True:
-            model = prompt_model(base_path)
-            if model is None:
+            # First level: config_dir (e.g. ids5_fields5_eq20_alpha-1)
+            ConsoleDisplay.console.print("\n[bold]Select config:[/bold]")
+            config_dir = prompt_model(base_path)
+            if config_dir is None:
                 break
-            if model == MAIN:
+            if config_dir == MAIN:
                 return
-            if model == BACK:
+            if config_dir == BACK:
                 break
 
+            config_path = str(Path(base_path) / config_dir)
             while True:
-                ConsoleDisplay.console.print("\n[bold]Choose action:[/bold]")
-                ConsoleDisplay.console.print("  1. View average results")
-                ConsoleDisplay.console.print("  2. View specific result")
-                ConsoleDisplay.console.print("  [dim]0 = back, m = main menu[/dim]")
-                inp = ConsoleDisplay.console.input("[bold cyan]> [/bold cyan]").strip().lower() or "1"
-
-                if inp == "m":
-                    return
-                if inp == "0":
+                ConsoleDisplay.console.print("\n[bold]Select model:[/bold]")
+                model = prompt_model(config_path)
+                if model is None:
                     break
-                if inp not in ("1", "2"):
-                    ConsoleDisplay.console.print("[red]Invalid option. Please enter 1, 2, 0, or m.[/red]")
-                    continue
-
-                if inp == "2":
-                    nav = run_specific_results(base_path, model)
-                    if nav == MAIN:
-                        return
-                    if nav == BACK:
-                        continue
-                    continue
-
-                # Default or 1: average results
-                model_path = Path(base_path) / model
-                domains = get_domains(model_path)
-                if not domains:
-                    ConsoleDisplay.console.print("[red]No domain found.[/red]")
-                    continue
-
-                domain_options = ["all"] + domains
-                ConsoleDisplay.console.print("\n[bold]Choose domain (all = aggregate all):[/bold]")
-                chosen = _prompt_choice("[bold cyan]> [/bold cyan]", domain_options, "all")
-                if chosen == MAIN:
+                if model == MAIN:
                     return
-                if chosen == BACK:
-                    continue
+                if model == BACK:
+                    break
 
-                domain_filter = None if chosen == "all" else chosen
-                run_average_results(base_path, model, domain_filter)
+                while True:
+                    ConsoleDisplay.console.print("\n[bold]Choose action:[/bold]")
+                    ConsoleDisplay.console.print("  1. View average results")
+                    ConsoleDisplay.console.print("  2. View specific result")
+                    ConsoleDisplay.console.print("  [dim]0 = back, m = main menu[/dim]")
+                    inp = ConsoleDisplay.console.input("[bold cyan]> [/bold cyan]").strip().lower() or "1"
+
+                    if inp == "m":
+                        return
+                    if inp == "0":
+                        break
+                    if inp not in ("1", "2"):
+                        ConsoleDisplay.console.print("[red]Invalid option. Please enter 1, 2, 0, or m.[/red]")
+                        continue
+
+                    if inp == "2":
+                        nav = run_specific_results(config_path, model)
+                        if nav == MAIN:
+                            return
+                        if nav == BACK:
+                            continue
+                        continue
+
+                    # Default or 1: average results
+                    model_path = Path(config_path) / model
+                    domains = get_domains(model_path)
+                    if not domains:
+                        ConsoleDisplay.console.print("[red]No domain found.[/red]")
+                        continue
+
+                    domain_options = ["all"] + domains
+                    ConsoleDisplay.console.print("\n[bold]Choose domain (all = aggregate all):[/bold]")
+                    chosen = _prompt_choice("[bold cyan]> [/bold cyan]", domain_options, "all")
+                    if chosen == MAIN:
+                        return
+                    if chosen == BACK:
+                        continue
+
+                    domain_filter = None if chosen == "all" else chosen
+                    run_average_results(config_path, model, domain_filter)
+                    continue
                 continue
             continue
 

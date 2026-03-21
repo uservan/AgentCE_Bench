@@ -98,11 +98,8 @@ class CacheEnv:
             output_path = self._build_output_path(
                 save_root=output_root,
                 model_name=agent.model,
+                domain=dataset_obj.domain,
                 instance_id=getattr(dataset_obj, "instance_id", ""),
-                max_query_ids=self.max_query_ids,
-                max_query_fields=self.max_query_fields,
-                extra_query_num=self.extra_query_num,
-                global_check_alpha=self.global_check_alpha,
                 tool_failure_rate=tool_failure_rate,
                 trial_index=trial_index,
             )
@@ -234,22 +231,16 @@ class CacheEnv:
         self,
         save_root: str,
         model_name: str,
+        domain: str,
         instance_id: str,
-        max_query_ids: int,
-        max_query_fields: int,
-        extra_query_num: int,
-        global_check_alpha: float | None,
         tool_failure_rate: float,
         trial_index: int,
     ) -> str:
-        file_name = (
-            f"fail-{tool_failure_rate}_"
-            f"trial-{trial_index}.json"
-        )
-        alpha_str = "none" if global_check_alpha is None else str(global_check_alpha)
-        config_dir = f"ids{max_query_ids}_fields{max_query_fields}_eq{extra_query_num}_alpha{alpha_str}"
         model_dir_name = self._get_model_dir_name(model_name)
-        return os.path.join(save_root, config_dir, model_dir_name, instance_id, file_name)
+        alpha_str = "none" if self.global_check_alpha is None else str(self.global_check_alpha)
+        config_dir = f"ids{self.max_query_ids}_fields{self.max_query_fields}_eq{self.extra_query_num}_alpha{alpha_str}"
+        file_name = f"fail-{tool_failure_rate}_trial-{trial_index}.json"
+        return os.path.join(save_root, config_dir, model_dir_name, domain, instance_id, file_name)
 
     def _save_run_result(
         self,

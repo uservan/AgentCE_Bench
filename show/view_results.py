@@ -27,26 +27,24 @@ def _get_models(base_path: str) -> list[str]:
 
 
 def get_domains(model_path: Path) -> list[str]:
-    """Infer domain list from result_instance_id directory names under model_path."""
-    domains: set[str] = set()
+    """List domain directories directly under model_path."""
+    domains: list[str] = []
     for d in model_path.iterdir():
-        if not d.is_dir():
-            continue
-        name = d.name
-        if "_r" in name and "_c" in name and "_h" in name and "_b" in name:
-            domain = name.split("_r")[0]
-            domains.add(domain)
+        if d.is_dir():
+            domains.append(d.name)
     return sorted(domains)
 
 
 def _get_hidden_branch_pairs(model_path: Path, domain: str) -> list[tuple[int, int]]:
     """Get all (hidden_slots, branch_budget) pairs for this domain."""
     pairs: set[tuple[int, int]] = set()
-    domain_prefix = f"{domain}_"
-    for d in model_path.iterdir():
-        if not d.is_dir() or not d.name.startswith(domain_prefix):
+    domain_dir = model_path / domain
+    if not domain_dir.is_dir():
+        return []
+    for d in domain_dir.iterdir():
+        if not d.is_dir():
             continue
-        m = re.search(r"_h(\d+)_b(\d+)_", d.name)
+        m = re.search(r"_h(\d+)_b(\d+)", d.name)
         if m:
             pairs.add((int(m.group(1)), int(m.group(2))))
     return sorted(pairs)
@@ -56,13 +54,15 @@ def _get_json_files_for_pair(
     model_path: Path, domain: str, hidden: int, branch: int
 ) -> list[Path]:
     """Get all json files for (domain, hidden, branch)."""
-    prefix = f"{domain}_"
-    suffix = f"_h{hidden}_b{branch}_"
+    domain_dir = model_path / domain
+    if not domain_dir.is_dir():
+        return []
+    suffix = f"_h{hidden}_b{branch}"
     out: list[Path] = []
-    for d in model_path.iterdir():
+    for d in domain_dir.iterdir():
         if not d.is_dir():
             continue
-        if d.name.startswith(prefix) and suffix in d.name:
+        if suffix in d.name:
             for f in d.glob("*.json"):
                 out.append(f)
     return sorted(out)

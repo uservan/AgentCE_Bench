@@ -111,6 +111,24 @@ def generate_dataset(
     if seed is not None:
         random.seed(seed)
 
+    os.makedirs(output_dir, exist_ok=True)
+    output_filename = build_output_filename(
+        domain=domain,
+        rows=row_count,
+        cols=col_count,
+        hidden_slots=hidden_slot_values,
+        candidates_per_slot=candidates_per_slot,
+        branch_budget=branch_budget_values,
+        seed=seed,
+    )
+    output_path = os.path.join(output_dir, output_filename)
+    if os.path.exists(output_path):
+        ConsoleDisplay.console.print(
+            f"[yellow]Skipping generation: file already exists: {output_path}[/yellow]"
+        )
+        with open(output_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
     instances = []
     total_combinations = len(hidden_slot_values) * len(branch_budget_values)
     completed_combinations = 0
@@ -236,17 +254,6 @@ def generate_dataset(
                 "total": total_combinations,
             })
 
-    os.makedirs(output_dir, exist_ok=True)
-    output_filename = build_output_filename(
-        domain=domain,
-        rows=row_count,
-        cols=col_count,
-        hidden_slots=hidden_slot_values,
-        candidates_per_slot=candidates_per_slot,
-        branch_budget=branch_budget_values,
-        seed=seed,
-    )
-    output_path = os.path.join(output_dir, output_filename)
     payload = {
         "domain": domain,
         "num_instances": len(instances),

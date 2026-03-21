@@ -72,7 +72,10 @@ def main(
     set_seed(seed)
     data_dir = data_dir or DEFAULT_DATA_DIR
     all_objects = load_all_dataset_objects(data_dir=data_dir)
-    dataset_objects = [obj for obj in all_objects if obj.domain in domain]
+    if domain == "all" or domain is None:
+        dataset_objects = all_objects
+    else:
+        dataset_objects = [obj for obj in all_objects if obj.domain in domain]
     if hidden_slots is not None and len(hidden_slots) > 0:
         hidden_set = set(hidden_slots)
         dataset_objects = [
