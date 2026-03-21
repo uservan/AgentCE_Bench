@@ -7,7 +7,7 @@
 单个领域的生成例子：
 
 ```bash
-python data_generation/generate.py --domain course --rows 5 --cols 10 --hidden-slots 1 3 5 7 9 13 17 20 --branch-budget 0 2 4 6 8 10 13 15 19 21 25 --candidates-per-slot 25 --max-retries 250 --candidate-resample-retries 20 --open-valid-preference-tries 50 100 150 --seed 42
+python data_generation/generate.py --domain course --rows 5 --cols 7 --hidden-slots 1 5 7 11 15 21 --branch-budget 0 2 4 8 10 15 19 21 25 --candidates-per-slot 25 --max-retries 250 --candidate-resample-retries 20 --open-valid-preference-tries 50 100 150 --seed 42 --max-workers 8
 ```
 
 这条命令表示：
@@ -21,6 +21,7 @@ python data_generation/generate.py --domain course --rows 5 --cols 10 --hidden-s
 - 输出到项目根目录下的 `data/`
 - 每个 hidden slot 默认显式存 `15` 个候选 item id；如果某个 budget 需要更多候选，生成器会自动放大该实例实际使用的 `candidates_per_slot`
 - `max_retries` 和 `candidate_resample_retries` 也可以通过命令行传入；如果不传，则分别默认使用 `160` 和 `12`
+- `--max-workers` 控制并行生成 `(hidden_slot, branch_budget)` 组合的线程数，默认为 `1`（串行）；设为大于 `1` 时并行生成，注意并行模式下随机状态不保证与串行完全一致
 - `open_valid_preference_tries` 默认是 `30 50 70`，表示 decoy 在 `future hidden=None` 场景下的三级偏好放松阈值：前 `30` 次优先满足“任意历史 truth/decoy 组合 + 当前 decoy”有效；前 `50` 次优先满足“前缀 truth + 后缀 decoy 组合 + 当前 decoy”有效；前 `70` 次优先满足“全历史 truth + 当前 decoy”有效；超过后只保留最初的硬约束
 - 每个实例里只会隐藏指定数量的 slot，非 hidden slot 保持固定，不再生成无用候选
 - 约束只保留 `slot_constraints` 和 `global_constraints`，不再生成 `row_constraints` / `col_constraints`
@@ -127,7 +128,7 @@ python data_generation/generate.py --domain course --rows 5 --cols 10 --hidden-s
 如果想一次生成所有场景，也可以用同样的尺寸设置：
 
 ```bash
-python data_generation/generate.py --all-domains --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 160 --candidate-resample-retries 12 --open-valid-preference-tries 30 50 70 --seed 42
+python data_generation/generate.py --all-domains --rows 5 --cols 5 --hidden-slots 1 3 5 7 9 13 17 --branch-budget 0 2 4 6 8 10 --candidates-per-slot 15 --max-retries 160 --candidate-resample-retries 12 --open-valid-preference-tries 30 50 70 --seed 42 --max-workers 36
 ```
 
 同一个 domain 的多个组合会被整合到同一个 JSON 文件里，顶层结构仍然是 `domain`、`num_instances`、`instances`。同一个固定尺寸下，不同隐藏设定的实例会一起放在 `instances` 中，每个实例自己的 `meta` 里保留对应的 `rows`、`cols`、`hidden_slots`、`branch_budget` 和 `candidates_per_slot`。

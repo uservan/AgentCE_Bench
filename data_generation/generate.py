@@ -3,6 +3,8 @@ import json
 import os
 import random
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import product
 from typing import Callable
 
@@ -85,6 +87,7 @@ def generate_dataset(
     candidate_resample_retries=DEFAULT_CANDIDATE_RESAMPLE_RETRIES,
     open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     seed=None,
+    max_workers=1,
     progress_callback: Callable[[dict[str, object]], None] | None = None,
 ):
     if domain not in SUPPORTED_DOMAINS:
@@ -111,7 +114,7 @@ def generate_dataset(
     if seed is not None:
         random.seed(seed)
 
-    os.makedirs(output_dir, exist_ok=True)
+    subdir = f"{row_count}x{col_count}"
     output_filename = build_output_filename(
         domain=domain,
         rows=row_count,
@@ -121,7 +124,8 @@ def generate_dataset(
         branch_budget=branch_budget_values,
         seed=seed,
     )
-    output_path = os.path.join(output_dir, output_filename)
+    output_path = os.path.join(output_dir, subdir, output_filename)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     if os.path.exists(output_path):
         ConsoleDisplay.console.print(
             f"[yellow]Skipping generation: file already exists: {output_path}[/yellow]"
@@ -129,10 +133,13 @@ def generate_dataset(
         with open(output_path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    instances = []
-    total_combinations = len(hidden_slot_values) * len(branch_budget_values)
-    completed_combinations = 0
-    for hidden_slot_count, branch_budget_value in product(hidden_slot_values, branch_budget_values):
+    combinations = list(product(hidden_slot_values, branch_budget_values))
+    total_combinations = len(combinations)
+    completed_box = [0]
+    instances_dict: dict[int, dict] = {}
+    lock = threading.Lock()
+
+    def run_combination(idx: int, hidden_slot_count: int, branch_budget_value: int) -> None:
         if hidden_slot_count > row_count * col_count:
             raise ValueError("hidden_slots cannot exceed rows * cols")
 
@@ -146,6 +153,8 @@ def generate_dataset(
         last_failure_reason = None
         for scaffold_try in range(1, max_retries + 1):
             if progress_callback is not None:
+                with lock:
+                    completed = completed_box[0]
                 progress_callback({
                     "stage": "scaffold",
                     "domain": domain,
@@ -155,7 +164,7 @@ def generate_dataset(
                     "branch_budget": branch_budget_value,
                     "scaffold_try": scaffold_try,
                     "scaffold_total": max_retries,
-                    "completed": completed_combinations,
+                    "completed": completed,
                     "total": total_combinations,
                 })
             scaffold = build_instance_scaffold(
@@ -173,6 +182,8 @@ def generate_dataset(
                 continue
             for candidate_try in range(1, candidate_resample_retries + 1):
                 if progress_callback is not None:
+                    with lock:
+                        completed = completed_box[0]
                     progress_callback({
                         "stage": "candidates",
                         "domain": domain,
@@ -184,7 +195,7 @@ def generate_dataset(
                         "scaffold_total": max_retries,
                         "candidate_try": candidate_try,
                         "candidate_total": candidate_resample_retries,
-                        "completed": completed_combinations,
+                        "completed": completed,
                         "total": total_combinations,
                     })
                 candidate = build_instance_from_scaffold(
@@ -199,13 +210,14 @@ def generate_dataset(
                 if validate_dataset(candidate):
                     dataset = candidate
                     break
-                last_failure_reason = (
-                    "生成的实例未通过 branch-budget 结构校验"
-                )
+                last_failure_reason = "生成的实例未通过 branch-budget 结构校验"
             if dataset is not None:
                 break
 
-        completed_combinations += 1
+        with lock:
+            completed_box[0] += 1
+            completed = completed_box[0]
+
         if dataset is None:
             if progress_callback is not None:
                 progress_callback({
@@ -215,7 +227,7 @@ def generate_dataset(
                     "cols": col_count,
                     "hidden_slots": hidden_slot_count,
                     "branch_budget": branch_budget_value,
-                    "completed": completed_combinations,
+                    "completed": completed,
                     "total": total_combinations,
                 })
             _print_generation_failure(
@@ -240,7 +252,8 @@ def generate_dataset(
             f"{domain}_r{row_count}_c{col_count}_"
             f"h{hidden_slot_count}_b{branch_budget_value}"
         )
-        instances.append(dataset)
+        with lock:
+            instances_dict[idx] = dataset
         if progress_callback is not None:
             progress_callback({
                 "stage": "completed",
@@ -250,9 +263,23 @@ def generate_dataset(
                 "cols": col_count,
                 "hidden_slots": hidden_slot_count,
                 "branch_budget": branch_budget_value,
-                "completed": completed_combinations,
+                "completed": completed,
                 "total": total_combinations,
             })
+
+    if max_workers > 1:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(run_combination, i, h, b)
+                for i, (h, b) in enumerate(combinations)
+            ]
+            for f in as_completed(futures):
+                f.result()  # re-raise any exception
+    else:
+        for i, (h, b) in enumerate(combinations):
+            run_combination(i, h, b)
+
+    instances = [instances_dict[i] for i in range(total_combinations)]
 
     payload = {
         "domain": domain,
@@ -287,11 +314,16 @@ def generate_all_datasets(
     candidate_resample_retries=DEFAULT_CANDIDATE_RESAMPLE_RETRIES,
     open_valid_preference_tries=DEFAULT_OPEN_VALID_PREFERENCE_TRIES,
     seed=None,
+    max_workers=1,
     progress_callback: Callable[[dict[str, object]], None] | None = None,
+    progress_callbacks: dict[str, Callable[[dict[str, object]], None]] | None = None,
 ):
-    results = {}
-    for domain in domains:
-        results[domain] = generate_dataset(
+    results: dict[str, dict] = {}
+    results_lock = threading.Lock()
+
+    def run_domain(domain: str) -> None:
+        cb = (progress_callbacks or {}).get(domain) or progress_callback
+        payload = generate_dataset(
             domain=domain,
             rows=rows,
             cols=cols,
@@ -303,8 +335,17 @@ def generate_all_datasets(
             candidate_resample_retries=candidate_resample_retries,
             open_valid_preference_tries=open_valid_preference_tries,
             seed=seed,
-            progress_callback=progress_callback,
+            max_workers=max_workers,
+            progress_callback=cb,
         )
+        with results_lock:
+            results[domain] = payload
+
+    with ThreadPoolExecutor(max_workers=len(domains)) as executor:
+        futures = [executor.submit(run_domain, d) for d in domains]
+        for f in as_completed(futures):
+            f.result()
+
     return results
 
 
@@ -360,6 +401,12 @@ def build_arg_parser():
         ),
     )
     parser.add_argument("--seed", type=int, help="Optional random seed for reproducible generation.")
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=1,
+        help="Number of parallel workers for generating (hidden_slot, branch_budget) combinations. Default=1 (sequential).",
+    )
     parser.add_argument("--validate-file", help="Validate an existing dataset JSON file instead of generating.")
     return parser
 
@@ -389,35 +436,22 @@ def main():
         return
 
     if args.all_domains:
-        total_runs = len(SUPPORTED_DOMAINS) * len(hidden_slot_values) * len(branch_budget_values)
+        combinations_per_domain = len(hidden_slot_values) * len(branch_budget_values)
         with ConsoleDisplay.create_progress() as progress:
-            task_id = progress.add_task("Generating datasets", total=total_runs)
+            # one progress bar per domain
+            domain_task_ids = {
+                d: progress.add_task(f"{d}", total=combinations_per_domain)
+                for d in SUPPORTED_DOMAINS
+            }
 
-            def on_progress(event: dict[str, object]) -> None:
-                description = (
-                    "Generating "
-                    f"{event.get('domain', '-')}"
-                    f" | size={event.get('rows', '-') }x{event.get('cols', '-')}"
-                    f" | hidden={event.get('hidden_slots', '-')}"
-                    f" | budget={event.get('branch_budget', '-')}"
-                )
-                stage = event.get("stage")
-                if stage == "scaffold":
-                    description += (
-                        f" | scaffold {event.get('scaffold_try', '-')}/{event.get('scaffold_total', '-')}"
-                    )
-                elif stage == "candidates":
-                    description += (
-                        f" | scaffold {event.get('scaffold_try', '-')}/{event.get('scaffold_total', '-')}"
-                        f" | candidates {event.get('candidate_try', '-')}/{event.get('candidate_total', '-')}"
-                    )
-                elif stage == "completed":
-                    progress.update(task_id, advance=1, description=description)
-                    return
-                elif stage == "failed":
-                    progress.update(task_id, advance=1, description=description)
-                    return
-                progress.update(task_id, completed=event.get("completed", 0), description=description)
+            def make_domain_callback(tid):
+                def on_progress(event: dict[str, object]) -> None:
+                    stage = event.get("stage")
+                    if stage in ("completed", "failed"):
+                        progress.update(tid, advance=1)
+                    else:
+                        progress.update(tid, completed=event.get("completed", 0))
+                return on_progress
 
             payloads = generate_all_datasets(
                 rows=args.rows,
@@ -430,9 +464,9 @@ def main():
                 candidate_resample_retries=args.candidate_resample_retries,
                 open_valid_preference_tries=args.open_valid_preference_tries,
                 seed=args.seed,
-                progress_callback=on_progress,
+                max_workers=args.max_workers,
+                progress_callbacks={d: make_domain_callback(tid) for d, tid in domain_task_ids.items()},
             )
-            progress.update(task_id, completed=total_runs, description="Dataset generation completed")
         for domain, payload in payloads.items():
             _, summaries = validate_payload(payload)
             print_validation_report(domain, summaries)
@@ -444,30 +478,14 @@ def main():
         task_id = progress.add_task("Generating datasets", total=total_runs)
 
         def on_progress(event: dict[str, object]) -> None:
-            description = (
-                "Generating "
-                f"{event.get('domain', '-')}"
-                f" | size={event.get('rows', '-') }x{event.get('cols', '-')}"
-                f" | hidden={event.get('hidden_slots', '-')}"
-                f" | budget={event.get('branch_budget', '-')}"
-            )
+            domain_ = event.get("domain", "-")
+            size = f"{event.get('rows', '-')}x{event.get('cols', '-')}"
+            description = f"Generating {domain_} | size={size}"
             stage = event.get("stage")
-            if stage == "scaffold":
-                description += (
-                    f" | scaffold {event.get('scaffold_try', '-')}/{event.get('scaffold_total', '-')}"
-                )
-            elif stage == "candidates":
-                description += (
-                    f" | scaffold {event.get('scaffold_try', '-')}/{event.get('scaffold_total', '-')}"
-                    f" | candidates {event.get('candidate_try', '-')}/{event.get('candidate_total', '-')}"
-                )
-            elif stage == "completed":
+            if stage in ("completed", "failed"):
                 progress.update(task_id, advance=1, description=description)
-                return
-            elif stage == "failed":
-                progress.update(task_id, advance=1, description=description)
-                return
-            progress.update(task_id, completed=event.get("completed", 0), description=description)
+            else:
+                progress.update(task_id, completed=event.get("completed", 0), description=description)
 
         payload = generate_dataset(
             domain=domain,
@@ -481,6 +499,7 @@ def main():
             candidate_resample_retries=args.candidate_resample_retries,
             open_valid_preference_tries=args.open_valid_preference_tries,
             seed=args.seed,
+            max_workers=args.max_workers,
             progress_callback=on_progress,
         )
         progress.update(task_id, completed=total_runs, description="Dataset generation completed")
