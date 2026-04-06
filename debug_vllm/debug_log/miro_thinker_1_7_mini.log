@@ -1,0 +1,2883 @@
+nohup: ignoring input
+╭──────────────────────── Benchmark Run Configuration ─────────────────────────╮
+│ Model: openai/miromind-ai/MiroThinker-1.7-mini                               │
+│ Data Dir: data/5x7                                                           │
+│ Domains: a, l, l                                                             │
+│ Tool Failure Rates: [0.0]                                                    │
+│ Num Trials: 1                                                                │
+│ Max Steps: 600                                                               │
+│ Tools Domain Only: True                                                      │
+│ Max Query IDs: 5                                                             │
+│ Max Query Fields: 5                                                          │
+│ Overwrite Results: False                                                     │
+│ Hidden Slots Filter: -                                                       │
+│ Branch Budget Filter: -                                                      │
+│ Check Include Reason: False                                                  │
+│ Global Check Alpha: -1                                                       │
+│ Extra Query Num: -1                                                          │
+│ Max Workers: 64                                                              │
+│ Save Path: /scratch/pioneer/jobs/wxy320/save/cached_results/                 │
+│ Seed: 42                                                                     │
+│ Dataset Objects: 324                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────── Datasets To Run ───────────────────────────────╮
+│                           Selected dataset objects                           │
+│ ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┓ │
+│ ┃           ┃ Instance  ┃      ┃      ┃ Hidden    ┃ Branch     ┃ Branch    ┃ │
+│ ┃ Domain    ┃ ID        ┃ Rows ┃ Cols ┃ Slots     ┃ Budget     ┃ Allocati… ┃ │
+│ ┡━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━┩ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 4          │ [3, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 8          │ [4, 2, 2] │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 10         │ [1, 2, 3, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 15         │ [7, 5, 2, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 19         │ [2, 7, 3, │ │
+│ │           │           │      │      │           │            │ 6, 1]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 21         │ [7, 1, 2, │ │
+│ │           │           │      │      │           │            │ 10, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 5         │ 25         │ [6, 5, 2, │ │
+│ │           │           │      │      │           │            │ 2, 10]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 4          │ [1, 3]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 8          │ [2, 3, 3] │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 10         │ [2, 3, 1, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 15         │ [6, 1, 7, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 19         │ [8, 3, 5, │ │
+│ │           │           │      │      │           │            │ 2, 1]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 21         │ [8, 4, 2, │ │
+│ │           │           │      │      │           │            │ 1, 6]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 7         │ 25         │ [11, 3,   │ │
+│ │           │           │      │      │           │            │ 1, 1, 9]  │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 4          │ [3, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 8          │ [2, 2, 4] │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 10         │ [2, 3, 3, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 15         │ [3, 3, 5, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 19         │ [3, 7, 4, │ │
+│ │           │           │      │      │           │            │ 4, 1]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 21         │ [4, 4, 4, │ │
+│ │           │           │      │      │           │            │ 8, 1]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 11        │ 25         │ [1, 8, 6, │ │
+│ │           │           │      │      │           │            │ 1, 9]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 4          │ [1, 3]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 8          │ [2, 4, 2] │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 10         │ [2, 1, 3, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 15         │ [6, 2, 5, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 19         │ [7, 1, 9, │ │
+│ │           │           │      │      │           │            │ 1, 1]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 21         │ [10, 5,   │ │
+│ │           │           │      │      │           │            │ 1, 2, 3]  │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 15        │ 25         │ [5, 7, 1, │ │
+│ │           │           │      │      │           │            │ 2, 10]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 4          │ [3, 1]    │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 8          │ [3, 2, 3] │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 10         │ [3, 4, 1, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 15         │ [4, 1, 6, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 19         │ [4, 1, 4, │ │
+│ │           │           │      │      │           │            │ 3, 7]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 21         │ [2, 8, 7, │ │
+│ │           │           │      │      │           │            │ 1, 3]     │ │
+│ │ course    │ course_r… │ 5    │ 7    │ 21        │ 25         │ [1, 9,    │ │
+│ │           │           │      │      │           │            │ 12, 1, 2] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 4          │ [1, 3]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 8          │ [3, 3, 2] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 10         │ [2, 5, 2, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 15         │ [4, 4, 1, │ │
+│ │           │           │      │      │           │            │ 6]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 19         │ [8, 2, 1, │ │
+│ │           │           │      │      │           │            │ 7, 1]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 21         │ [5, 1, 9, │ │
+│ │           │           │      │      │           │            │ 2, 4]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 5         │ 25         │ [2, 5,    │ │
+│ │           │           │      │      │           │            │ 10, 4, 4] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 4          │ [3, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 8          │ [4, 2, 2] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 10         │ [5, 2, 2, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 15         │ [3, 4, 7, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 19         │ [2, 5, 2, │ │
+│ │           │           │      │      │           │            │ 9, 1]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 21         │ [4, 3, 5, │ │
+│ │           │           │      │      │           │            │ 2, 7]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 7         │ 25         │ [2, 1, 3, │ │
+│ │           │           │      │      │           │            │ 11, 8]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 4          │ [1, 3]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 8          │ [2, 2, 4] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 10         │ [1, 5, 1, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 15         │ [3, 6, 4, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 19         │ [7, 2, 3, │ │
+│ │           │           │      │      │           │            │ 1, 6]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 21         │ [3, 2,    │ │
+│ │           │           │      │      │           │            │ 10, 3, 3] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 11        │ 25         │ [9, 1, 2, │ │
+│ │           │           │      │      │           │            │ 4, 9]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 4          │ [1, 3]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 8          │ [3, 1, 4] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 10         │ [3, 2, 3, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 15         │ [1, 6, 1, │ │
+│ │           │           │      │      │           │            │ 7]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 19         │ [2, 2, 1, │ │
+│ │           │           │      │      │           │            │ 9, 5]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 21         │ [8, 3, 1, │ │
+│ │           │           │      │      │           │            │ 6, 3]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 15        │ 25         │ [10, 3,   │ │
+│ │           │           │      │      │           │            │ 4, 6, 2]  │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 4          │ [1, 3]    │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 8          │ [3, 3, 2] │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 10         │ [1, 5, 2, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 15         │ [1, 3, 7, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 19         │ [1, 3, 4, │ │
+│ │           │           │      │      │           │            │ 4, 7]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 21         │ [9, 3, 1, │ │
+│ │           │           │      │      │           │            │ 1, 7]     │ │
+│ │ meal      │ meal_r5_… │ 5    │ 7    │ 21        │ 25         │ [1, 1,    │ │
+│ │           │           │      │      │           │            │ 12, 10,   │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 4          │ [1, 3]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 8          │ [3, 2, 3] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 10         │ [1, 1, 5, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 15         │ [7, 4, 1, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 19         │ [4, 4, 1, │ │
+│ │           │           │      │      │           │            │ 1, 9]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 21         │ [6, 4, 1, │ │
+│ │           │           │      │      │           │            │ 9, 1]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 5         │ 25         │ [5, 9, 5, │ │
+│ │           │           │      │      │           │            │ 1, 5]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 4          │ [2, 2]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 8          │ [4, 2, 2] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 10         │ [5, 1, 2, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 15         │ [6, 6, 1, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 19         │ [8, 2, 1, │ │
+│ │           │           │      │      │           │            │ 4, 4]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 21         │ [1, 10,   │ │
+│ │           │           │      │      │           │            │ 5, 2, 3]  │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 7         │ 25         │ [12, 1,   │ │
+│ │           │           │      │      │           │            │ 6, 2, 4]  │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 4          │ [3, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 8          │ [4, 1, 3] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 10         │ [3, 4, 1, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 15         │ [5, 3, 6, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 19         │ [4, 5, 2, │ │
+│ │           │           │      │      │           │            │ 3, 5]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 21         │ [7, 2, 2, │ │
+│ │           │           │      │      │           │            │ 7, 3]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 11        │ 25         │ [12, 9,   │ │
+│ │           │           │      │      │           │            │ 2, 1, 1]  │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 4          │ [3, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 8          │ [2, 4, 2] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 10         │ [3, 3, 3, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 15         │ [1, 5, 7, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 19         │ [7, 3, 5, │ │
+│ │           │           │      │      │           │            │ 3, 1]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 21         │ [5, 8, 1, │ │
+│ │           │           │      │      │           │            │ 3, 4]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 15        │ 25         │ [2, 10,   │ │
+│ │           │           │      │      │           │            │ 11, 1, 1] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 4          │ [3, 1]    │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 8          │ [4, 3, 1] │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 10         │ [1, 5, 3, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 15         │ [1, 4, 4, │ │
+│ │           │           │      │      │           │            │ 6]        │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 19         │ [9, 4, 1, │ │
+│ │           │           │      │      │           │            │ 2, 3]     │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 21         │ [3, 10,   │ │
+│ │           │           │      │      │           │            │ 2, 4, 2]  │ │
+│ │ pc_build  │ pc_build… │ 5    │ 7    │ 21        │ 25         │ [1, 4,    │ │
+│ │           │           │      │      │           │            │ 10, 3, 7] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 4          │ [1, 3]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 8          │ [1, 4, 3] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 10         │ [2, 5, 1, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 15         │ [2, 3, 7, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 19         │ [6, 4, 3, │ │
+│ │           │           │      │      │           │            │ 1, 5]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 21         │ [3, 4, 9, │ │
+│ │           │           │      │      │           │            │ 2, 3]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 5         │ 25         │ [2, 8, 3, │ │
+│ │           │           │      │      │           │            │ 10, 2]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 4          │ [1, 3]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 8          │ [2, 2, 4] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 10         │ [3, 1, 3, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 15         │ [3, 3, 4, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 19         │ [2, 2, 5, │ │
+│ │           │           │      │      │           │            │ 9, 1]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 21         │ [2, 5, 9, │ │
+│ │           │           │      │      │           │            │ 1, 4]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 7         │ 25         │ [1, 12,   │ │
+│ │           │           │      │      │           │            │ 4, 1, 7]  │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 4          │ [2, 2]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 8          │ [3, 4, 1] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 10         │ [1, 1, 5, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 15         │ [1, 7, 4, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 19         │ [6, 2, 8, │ │
+│ │           │           │      │      │           │            │ 1, 2]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 21         │ [7, 6, 2, │ │
+│ │           │           │      │      │           │            │ 3, 3]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 11        │ 25         │ [4, 2,    │ │
+│ │           │           │      │      │           │            │ 10, 1, 8] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 4          │ [2, 2]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 8          │ [1, 4, 3] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 10         │ [1, 3, 5, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 15         │ [5, 2, 6, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 19         │ [3, 5, 7, │ │
+│ │           │           │      │      │           │            │ 3, 1]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 21         │ [9, 4, 1, │ │
+│ │           │           │      │      │           │            │ 6, 1]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 15        │ 25         │ [8, 1, 4, │ │
+│ │           │           │      │      │           │            │ 4, 8]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 4          │ [3, 1]    │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 8          │ [3, 1, 4] │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 10         │ [1, 4, 3, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 15         │ [2, 5, 2, │ │
+│ │           │           │      │      │           │            │ 6]        │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 19         │ [6, 1, 9, │ │
+│ │           │           │      │      │           │            │ 1, 2]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 21         │ [1, 7, 2, │ │
+│ │           │           │      │      │           │            │ 4, 7]     │ │
+│ │ shopping  │ shopping… │ 5    │ 7    │ 21        │ 25         │ [3, 1, 9, │ │
+│ │           │           │      │      │           │            │ 5, 7]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 4          │ [2, 2]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 8          │ [4, 3, 1] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 10         │ [2, 2, 1, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 15         │ [3, 6, 1, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 19         │ [2, 1, 2, │ │
+│ │           │           │      │      │           │            │ 9, 5]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 21         │ [5, 2, 8, │ │
+│ │           │           │      │      │           │            │ 1, 5]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 5         │ 25         │ [9, 10,   │ │
+│ │           │           │      │      │           │            │ 1, 3, 2]  │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 4          │ [1, 3]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 8          │ [3, 3, 2] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 10         │ [2, 1, 2, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 15         │ [2, 3, 5, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 19         │ [3, 4, 4, │ │
+│ │           │           │      │      │           │            │ 2, 6]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 21         │ [6, 1, 3, │ │
+│ │           │           │      │      │           │            │ 3, 8]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 7         │ 25         │ [11, 2,   │ │
+│ │           │           │      │      │           │            │ 2, 9, 1]  │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 4          │ [1, 3]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 8          │ [3, 2, 3] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 10         │ [5, 1, 3, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 15         │ [4, 4, 3, │ │
+│ │           │           │      │      │           │            │ 4]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 19         │ [1, 4, 4, │ │
+│ │           │           │      │      │           │            │ 9, 1]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 21         │ [8, 10,   │ │
+│ │           │           │      │      │           │            │ 1, 1, 1]  │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 11        │ 25         │ [1, 1, 1, │ │
+│ │           │           │      │      │           │            │ 10, 12]   │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 4          │ [3, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 8          │ [4, 3, 1] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 10         │ [4, 3, 1, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 15         │ [6, 5, 1, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 19         │ [2, 2, 9, │ │
+│ │           │           │      │      │           │            │ 2, 4]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 21         │ [2, 8, 6, │ │
+│ │           │           │      │      │           │            │ 4, 1]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 15        │ 25         │ [10, 1,   │ │
+│ │           │           │      │      │           │            │ 1, 1, 12] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 4          │ [2, 2]    │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 8          │ [3, 2, 3] │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 10         │ [3, 2, 4, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 15         │ [3, 2, 5, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 19         │ [1, 8, 2, │ │
+│ │           │           │      │      │           │            │ 3, 5]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 21         │ [1, 8, 5, │ │
+│ │           │           │      │      │           │            │ 3, 4]     │ │
+│ │ travel    │ travel_r… │ 5    │ 7    │ 21        │ 25         │ [2, 2, 8, │ │
+│ │           │           │      │      │           │            │ 12, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 2          │ [2]       │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 4          │ [4]       │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 8          │ [8]       │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 10         │ [10]      │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 15         │ [15]      │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 19         │ [19]      │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 21         │ [21]      │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 1         │ 25         │ [25]      │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 2          │ [1, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 4          │ [3, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 8          │ [3, 1, 4] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 10         │ [5, 2, 2, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 15         │ [3, 2, 5, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 19         │ [1, 4, 5, │ │
+│ │           │           │      │      │           │            │ 7, 2]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 21         │ [1, 7, 6, │ │
+│ │           │           │      │      │           │            │ 1, 6]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 5         │ 25         │ [1, 10,   │ │
+│ │           │           │      │      │           │            │ 11, 1, 2] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 2          │ [1, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 4          │ [3, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 8          │ [3, 3, 2] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 10         │ [1, 1, 3, │ │
+│ │           │           │      │      │           │            │ 5]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 15         │ [7, 4, 2, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 19         │ [8, 3, 2, │ │
+│ │           │           │      │      │           │            │ 2, 4]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 21         │ [1, 2, 3, │ │
+│ │           │           │      │      │           │            │ 5, 10]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 7         │ 25         │ [1, 1, 4, │ │
+│ │           │           │      │      │           │            │ 9, 10]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 2          │ [1, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 4          │ [3, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 8          │ [4, 3, 1] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 10         │ [5, 1, 3, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 15         │ [6, 7, 1, │ │
+│ │           │           │      │      │           │            │ 1]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 19         │ [7, 6, 3, │ │
+│ │           │           │      │      │           │            │ 2, 1]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 21         │ [1, 3, 3, │ │
+│ │           │           │      │      │           │            │ 8, 6]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 11        │ 25         │ [3, 10,   │ │
+│ │           │           │      │      │           │            │ 10, 1, 1] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 2          │ [1, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 4          │ [3, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 8          │ [4, 3, 1] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 10         │ [1, 5, 1, │ │
+│ │           │           │      │      │           │            │ 3]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 15         │ [2, 2, 4, │ │
+│ │           │           │      │      │           │            │ 7]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 19         │ [9, 1, 3, │ │
+│ │           │           │      │      │           │            │ 5, 1]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 21         │ [1, 3, 3, │ │
+│ │           │           │      │      │           │            │ 8, 6]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 15        │ 25         │ [2, 7, 4, │ │
+│ │           │           │      │      │           │            │ 2, 10]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 0          │ []        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 2          │ [1, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 4          │ [3, 1]    │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 8          │ [1, 4, 3] │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 10         │ [1, 2, 5, │ │
+│ │           │           │      │      │           │            │ 2]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 15         │ [6, 1, 1, │ │
+│ │           │           │      │      │           │            │ 7]        │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 19         │ [3, 5, 1, │ │
+│ │           │           │      │      │           │            │ 1, 9]     │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 21         │ [10, 2,   │ │
+│ │           │           │      │      │           │            │ 4, 4, 1]  │ │
+│ │ workforce │ workforc… │ 5    │ 7    │ 21        │ 25         │ [3, 1, 3, │ │
+│ │           │           │      │      │           │            │ 9, 9]     │ │
+│ └───────────┴───────────┴──────┴──────┴───────────┴────────────┴───────────┘ │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────── Benchmark Execution ─────────────────────────────╮
+│ Stage: Starting benchmark tasks                                              │
+│ Total Runs: 324                                                              │
+│ Datasets: 324                                                                │
+│ Max Query IDs: 5                                                             │
+│ Max Query Fields: 5                                                          │
+│ Overwrite Results: False                                                     │
+│ Hidden Slots Filter: -                                                       │
+│ Branch Budget Filter: -                                                      │
+│ Check Include Reason: False                                                  │
+│ Global Check Alpha: -1                                                       │
+│ Extra Query Num: -1                                                          │
+│ Save Path: /scratch/pioneer/jobs/wxy320/save/cached_results/                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+[1/324] Running course/course_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[2/324] Running course/course_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[3/324] Running course/course_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+[4/324] Running course/course_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[5/324] Running course/course_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[6/324] Running course/course_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+[7/324] Running course/course_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[8/324] Running course/course_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[9/324] Running course/course_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[10/324] Running course/course_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+[11/324] Running course/course_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[12/324] Running course/course_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[13/324] Running course/course_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[14/324] Running course/course_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+[15/324] Running course/course_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[16/324] Running course/course_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[17/324] Running course/course_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[18/324] Running course/course_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[19/324] Running course/course_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+[20/324] Running course/course_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[21/324] Running course/course_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[22/324] Running course/course_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[23/324] Running course/course_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+[24/324] Running course/course_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+[25/324] Running course/course_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+[26/324] Running course/course_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[27/324] Running course/course_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+[28/324] Running course/course_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[29/324] Running course/course_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[30/324] Running course/course_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[31/324] Running course/course_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[32/324] Running course/course_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+[33/324] Running course/course_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[34/324] Running course/course_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[35/324] Running course/course_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[36/324] Running course/course_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[37/324] Running course/course_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+[38/324] Running course/course_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[39/324] Running course/course_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+[40/324] Running course/course_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[41/324] Running course/course_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[42/324] Running course/course_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[43/324] Running course/course_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[44/324] Running course/course_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[45/324] Running course/course_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[46/324] Running course/course_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+[47/324] Running course/course_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[48/324] Running course/course_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[49/324] Running course/course_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[50/324] Running course/course_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[51/324] Running course/course_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[52/324] Running course/course_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[53/324] Running course/course_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+[54/324] Running course/course_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[55/324] Running meal/meal_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[56/324] Running meal/meal_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[57/324] Running meal/meal_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+[58/324] Running meal/meal_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[59/324] Running meal/meal_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[60/324] Running meal/meal_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+[61/324] Running meal/meal_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[62/324] Running meal/meal_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[63/324] Running meal/meal_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[64/324] Running meal/meal_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+[9/324] Running course/course_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | cached
+[65/324] Running meal/meal_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[15/324] Running course/course_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | cached
+[66/324] Running meal/meal_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[20/324] Running course/course_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | cached
+[34/324] Running course/course_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | cached
+[35/324] Running course/course_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | cached
+[18/324] Running course/course_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | cached
+[32/324] Running course/course_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | cached
+[67/324] Running meal/meal_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[11/324] Running course/course_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | cached
+[28/324] Running course/course_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | cached
+[63/324] Running meal/meal_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | cached
+[33/324] Running course/course_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | cached
+[31/324] Running course/course_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | cached
+[36/324] Running course/course_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | cached
+[23/324] Running course/course_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | cached
+[68/324] Running meal/meal_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+[56/324] Running meal/meal_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | cached
+[40/324] Running course/course_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | cached
+[10/324] Running course/course_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | cached
+[60/324] Running meal/meal_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | cached
+[4/324] Running course/course_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | cached
+[41/324] Running course/course_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | cached
+[19/324] Running course/course_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | cached
+[7/324] Running course/course_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | cached
+[6/324] Running course/course_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | cached
+[61/324] Running meal/meal_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | cached
+[13/324] Running course/course_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | cached
+[16/324] Running course/course_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | cached
+[2/324] Running course/course_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | cached
+[3/324] Running course/course_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | cached
+[8/324] Running course/course_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | cached
+[48/324] Running course/course_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | cached
+[69/324] Running meal/meal_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[43/324] Running course/course_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | cached
+[24/324] Running course/course_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | cached
+[37/324] Running course/course_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | cached
+[38/324] Running course/course_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | cached
+[5/324] Running course/course_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | cached
+[55/324] Running meal/meal_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | cached
+[29/324] Running course/course_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | cached
+[47/324] Running course/course_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | cached
+[50/324] Running course/course_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | cached
+[39/324] Running course/course_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | cached
+[26/324] Running course/course_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | cached
+[52/324] Running course/course_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | cached
+[1/324] Running course/course_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | cached
+[42/324] Running course/course_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | cached
+[45/324] Running course/course_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | cached
+[46/324] Running course/course_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | cached
+[22/324] Running course/course_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | cached
+[70/324] Running meal/meal_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[64/324] Running meal/meal_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | cached
+[71/324] Running meal/meal_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[49/324] Running course/course_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | cached
+[72/324] Running meal/meal_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[62/324] Running meal/meal_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | cached
+[73/324] Running meal/meal_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+[74/324] Running meal/meal_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[75/324] Running meal/meal_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[76/324] Running meal/meal_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[77/324] Running meal/meal_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+[78/324] Running meal/meal_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+[79/324] Running meal/meal_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+[80/324] Running meal/meal_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[81/324] Running meal/meal_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+[82/324] Running meal/meal_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[83/324] Running meal/meal_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[84/324] Running meal/meal_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[85/324] Running meal/meal_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[86/324] Running meal/meal_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+[87/324] Running meal/meal_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[88/324] Running meal/meal_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[89/324] Running meal/meal_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[90/324] Running meal/meal_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[91/324] Running meal/meal_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+[92/324] Running meal/meal_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[93/324] Running meal/meal_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+[94/324] Running meal/meal_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[95/324] Running meal/meal_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[96/324] Running meal/meal_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[97/324] Running meal/meal_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[98/324] Running meal/meal_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[99/324] Running meal/meal_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[100/324] Running meal/meal_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+[101/324] Running meal/meal_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[102/324] Running meal/meal_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[103/324] Running meal/meal_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[104/324] Running meal/meal_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[105/324] Running meal/meal_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[106/324] Running meal/meal_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[107/324] Running meal/meal_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+[108/324] Running meal/meal_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[69/324] Running meal/meal_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | cached
+[109/324] Running pc_build/pc_build_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[110/324] Running pc_build/pc_build_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[111/324] Running pc_build/pc_build_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+[112/324] Running pc_build/pc_build_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[113/324] Running pc_build/pc_build_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[114/324] Running pc_build/pc_build_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+[75/324] Running meal/meal_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | cached
+[87/324] Running meal/meal_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | cached
+[79/324] Running meal/meal_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | cached
+[73/324] Running meal/meal_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | cached
+[81/324] Running meal/meal_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | cached
+[74/324] Running meal/meal_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | cached
+[88/324] Running meal/meal_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | cached
+[77/324] Running meal/meal_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | cached
+[86/324] Running meal/meal_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | cached
+[93/324] Running meal/meal_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | cached
+[90/324] Running meal/meal_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | cached
+[91/324] Running meal/meal_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | cached
+[94/324] Running meal/meal_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | cached
+[97/324] Running meal/meal_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | cached
+[80/324] Running meal/meal_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | cached
+[92/324] Running meal/meal_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | cached
+[115/324] Running pc_build/pc_build_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[116/324] Running pc_build/pc_build_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[117/324] Running pc_build/pc_build_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[118/324] Running pc_build/pc_build_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+[119/324] Running pc_build/pc_build_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[120/324] Running pc_build/pc_build_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[121/324] Running pc_build/pc_build_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[122/324] Running pc_build/pc_build_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+[123/324] Running pc_build/pc_build_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[100/324] Running meal/meal_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | cached
+[102/324] Running meal/meal_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | cached
+[104/324] Running meal/meal_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | cached
+[99/324] Running meal/meal_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | cached
+[109/324] Running pc_build/pc_build_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | cached
+[105/324] Running meal/meal_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | cached
+[110/324] Running pc_build/pc_build_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | cached
+[112/324] Running pc_build/pc_build_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | cached
+[101/324] Running meal/meal_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | cached
+[124/324] Running pc_build/pc_build_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[103/324] Running meal/meal_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | cached
+[106/324] Running meal/meal_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | cached
+[107/324] Running meal/meal_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | cached
+[125/324] Running pc_build/pc_build_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[108/324] Running meal/meal_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | cached
+[126/324] Running pc_build/pc_build_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[113/324] Running pc_build/pc_build_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | cached
+[127/324] Running pc_build/pc_build_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+[128/324] Running pc_build/pc_build_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[129/324] Running pc_build/pc_build_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[114/324] Running pc_build/pc_build_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | cached
+[130/324] Running pc_build/pc_build_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[131/324] Running pc_build/pc_build_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+[132/324] Running pc_build/pc_build_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+[133/324] Running pc_build/pc_build_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+[134/324] Running pc_build/pc_build_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[135/324] Running pc_build/pc_build_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+[136/324] Running pc_build/pc_build_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[137/324] Running pc_build/pc_build_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[138/324] Running pc_build/pc_build_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[139/324] Running pc_build/pc_build_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[140/324] Running pc_build/pc_build_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+[116/324] Running pc_build/pc_build_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | cached
+[121/324] Running pc_build/pc_build_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | cached
+[123/324] Running pc_build/pc_build_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | cached
+[141/324] Running pc_build/pc_build_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[120/324] Running pc_build/pc_build_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | cached
+[118/324] Running pc_build/pc_build_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | cached
+[142/324] Running pc_build/pc_build_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[122/324] Running pc_build/pc_build_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | cached
+[117/324] Running pc_build/pc_build_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | cached
+[143/324] Running pc_build/pc_build_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[144/324] Running pc_build/pc_build_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[145/324] Running pc_build/pc_build_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+[146/324] Running pc_build/pc_build_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[125/324] Running pc_build/pc_build_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | cached
+[147/324] Running pc_build/pc_build_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+[148/324] Running pc_build/pc_build_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[126/324] Running pc_build/pc_build_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | cached
+[124/324] Running pc_build/pc_build_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | cached
+[134/324] Running pc_build/pc_build_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | cached
+[129/324] Running pc_build/pc_build_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | cached
+[136/324] Running pc_build/pc_build_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | cached
+[128/324] Running pc_build/pc_build_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | cached
+[132/324] Running pc_build/pc_build_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | cached
+[130/324] Running pc_build/pc_build_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | cached
+[138/324] Running pc_build/pc_build_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | cached
+[127/324] Running pc_build/pc_build_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | cached
+[149/324] Running pc_build/pc_build_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[139/324] Running pc_build/pc_build_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | cached
+[137/324] Running pc_build/pc_build_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | cached
+[150/324] Running pc_build/pc_build_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[151/324] Running pc_build/pc_build_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[152/324] Running pc_build/pc_build_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[153/324] Running pc_build/pc_build_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[154/324] Running pc_build/pc_build_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+[155/324] Running pc_build/pc_build_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[156/324] Running pc_build/pc_build_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[157/324] Running pc_build/pc_build_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[158/324] Running pc_build/pc_build_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[159/324] Running pc_build/pc_build_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[160/324] Running pc_build/pc_build_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[141/324] Running pc_build/pc_build_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | 
+cached
+[142/324] Running pc_build/pc_build_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | 
+cached
+[161/324] Running pc_build/pc_build_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+[162/324] Running pc_build/pc_build_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[143/324] Running pc_build/pc_build_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | 
+cached
+[145/324] Running pc_build/pc_build_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | cached
+[163/324] Running shopping/shopping_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[148/324] Running pc_build/pc_build_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | cached
+[164/324] Running shopping/shopping_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[165/324] Running shopping/shopping_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+[166/324] Running shopping/shopping_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[146/324] Running pc_build/pc_build_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | cached
+[167/324] Running shopping/shopping_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[168/324] Running shopping/shopping_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+[169/324] Running shopping/shopping_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[170/324] Running shopping/shopping_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[171/324] Running shopping/shopping_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[172/324] Running shopping/shopping_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+[153/324] Running pc_build/pc_build_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | 
+cached
+[173/324] Running shopping/shopping_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[151/324] Running pc_build/pc_build_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | 
+cached
+[156/324] Running pc_build/pc_build_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | cached
+[150/324] Running pc_build/pc_build_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | 
+cached
+[165/324] Running shopping/shopping_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | cached
+[149/324] Running pc_build/pc_build_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | 
+cached
+[152/324] Running pc_build/pc_build_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | 
+cached
+[168/324] Running shopping/shopping_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | cached
+[174/324] Running shopping/shopping_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[173/324] Running shopping/shopping_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | cached
+[172/324] Running shopping/shopping_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | cached
+[158/324] Running pc_build/pc_build_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | 
+cached
+[170/324] Running shopping/shopping_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | cached
+[166/324] Running shopping/shopping_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | cached
+[163/324] Running shopping/shopping_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | cached
+[160/324] Running pc_build/pc_build_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | 
+cached
+[175/324] Running shopping/shopping_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[164/324] Running shopping/shopping_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | cached
+[157/324] Running pc_build/pc_build_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | cached
+[159/324] Running pc_build/pc_build_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | 
+cached
+[161/324] Running pc_build/pc_build_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | 
+cached
+[167/324] Running shopping/shopping_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | cached
+[176/324] Running shopping/shopping_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+[169/324] Running shopping/shopping_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | cached
+[177/324] Running shopping/shopping_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[178/324] Running shopping/shopping_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[179/324] Running shopping/shopping_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[180/324] Running shopping/shopping_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[171/324] Running shopping/shopping_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | cached
+[181/324] Running shopping/shopping_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+[182/324] Running shopping/shopping_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[183/324] Running shopping/shopping_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[184/324] Running shopping/shopping_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[185/324] Running shopping/shopping_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+[186/324] Running shopping/shopping_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+[187/324] Running shopping/shopping_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+[188/324] Running shopping/shopping_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[189/324] Running shopping/shopping_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+[190/324] Running shopping/shopping_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[191/324] Running shopping/shopping_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[192/324] Running shopping/shopping_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[193/324] Running shopping/shopping_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[194/324] Running shopping/shopping_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+[190/324] Running shopping/shopping_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | cached
+[179/324] Running shopping/shopping_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | cached
+[176/324] Running shopping/shopping_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | cached
+[175/324] Running shopping/shopping_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | cached
+[195/324] Running shopping/shopping_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[182/324] Running shopping/shopping_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | cached
+[183/324] Running shopping/shopping_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | cached
+[178/324] Running shopping/shopping_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | cached
+[194/324] Running shopping/shopping_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | 
+cached
+[185/324] Running shopping/shopping_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | cached
+[187/324] Running shopping/shopping_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | cached
+[191/324] Running shopping/shopping_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | cached
+[181/324] Running shopping/shopping_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | cached
+[196/324] Running shopping/shopping_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[197/324] Running shopping/shopping_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[189/324] Running shopping/shopping_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | cached
+[192/324] Running shopping/shopping_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | cached
+[198/324] Running shopping/shopping_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[199/324] Running shopping/shopping_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+[200/324] Running shopping/shopping_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[201/324] Running shopping/shopping_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+[202/324] Running shopping/shopping_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[203/324] Running shopping/shopping_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[204/324] Running shopping/shopping_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[205/324] Running shopping/shopping_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[206/324] Running shopping/shopping_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[207/324] Running shopping/shopping_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[208/324] Running shopping/shopping_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+[201/324] Running shopping/shopping_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | cached
+[209/324] Running shopping/shopping_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[202/324] Running shopping/shopping_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | cached
+[195/324] Running shopping/shopping_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | 
+cached
+[210/324] Running shopping/shopping_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[200/324] Running shopping/shopping_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | cached
+[203/324] Running shopping/shopping_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | 
+cached
+[207/324] Running shopping/shopping_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | 
+cached
+[211/324] Running shopping/shopping_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[212/324] Running shopping/shopping_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[208/324] Running shopping/shopping_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | cached
+[213/324] Running shopping/shopping_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[199/324] Running shopping/shopping_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | cached
+[214/324] Running shopping/shopping_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[196/324] Running shopping/shopping_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | 
+cached
+[215/324] Running shopping/shopping_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+[204/324] Running shopping/shopping_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | 
+cached
+[216/324] Running shopping/shopping_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[217/324] Running travel/travel_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[218/324] Running travel/travel_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[210/324] Running shopping/shopping_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | cached
+[219/324] Running travel/travel_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+[214/324] Running shopping/shopping_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | 
+cached
+[220/324] Running travel/travel_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[215/324] Running shopping/shopping_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | 
+cached
+[217/324] Running travel/travel_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | cached
+[221/324] Running travel/travel_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[218/324] Running travel/travel_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | cached
+[212/324] Running shopping/shopping_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | 
+cached
+[213/324] Running shopping/shopping_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | 
+cached
+[222/324] Running travel/travel_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+[211/324] Running shopping/shopping_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | cached
+[223/324] Running travel/travel_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[219/324] Running travel/travel_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | cached
+[224/324] Running travel/travel_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[225/324] Running travel/travel_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[226/324] Running travel/travel_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+[220/324] Running travel/travel_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | cached
+[227/324] Running travel/travel_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[222/324] Running travel/travel_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | cached
+[221/324] Running travel/travel_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | cached
+[228/324] Running travel/travel_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[224/324] Running travel/travel_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | cached
+[225/324] Running travel/travel_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | cached
+[223/324] Running travel/travel_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | cached
+[229/324] Running travel/travel_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[230/324] Running travel/travel_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+[227/324] Running travel/travel_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | cached
+[231/324] Running travel/travel_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[232/324] Running travel/travel_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[228/324] Running travel/travel_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | cached
+[233/324] Running travel/travel_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[234/324] Running travel/travel_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[235/324] Running travel/travel_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+[229/324] Running travel/travel_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | cached
+[236/324] Running travel/travel_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[230/324] Running travel/travel_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | cached
+[234/324] Running travel/travel_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | cached
+[237/324] Running travel/travel_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[238/324] Running travel/travel_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[232/324] Running travel/travel_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | cached
+[239/324] Running travel/travel_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+[233/324] Running travel/travel_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | cached
+[235/324] Running travel/travel_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | cached
+[240/324] Running travel/travel_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+[236/324] Running travel/travel_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | cached
+[237/324] Running travel/travel_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | cached
+[241/324] Running travel/travel_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+[231/324] Running travel/travel_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | cached
+[242/324] Running travel/travel_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[243/324] Running travel/travel_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+[244/324] Running travel/travel_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[241/324] Running travel/travel_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | cached
+[239/324] Running travel/travel_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | cached
+[243/324] Running travel/travel_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | cached
+[242/324] Running travel/travel_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | cached
+[245/324] Running travel/travel_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[240/324] Running travel/travel_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | cached
+[246/324] Running travel/travel_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[238/324] Running travel/travel_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | cached
+[247/324] Running travel/travel_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[248/324] Running travel/travel_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+[249/324] Running travel/travel_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[250/324] Running travel/travel_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[250/324] Running travel/travel_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | cached
+[251/324] Running travel/travel_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[245/324] Running travel/travel_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | cached
+[252/324] Running travel/travel_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[249/324] Running travel/travel_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | cached
+[253/324] Running travel/travel_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+[247/324] Running travel/travel_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | cached
+[254/324] Running travel/travel_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[246/324] Running travel/travel_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | cached
+[255/324] Running travel/travel_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+[253/324] Running travel/travel_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | cached
+[256/324] Running travel/travel_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[252/324] Running travel/travel_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | cached
+[251/324] Running travel/travel_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | cached
+[255/324] Running travel/travel_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | cached
+[257/324] Running travel/travel_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[258/324] Running travel/travel_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[259/324] Running travel/travel_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[259/324] Running travel/travel_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | cached
+[260/324] Running travel/travel_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[256/324] Running travel/travel_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | cached
+[261/324] Running travel/travel_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[260/324] Running travel/travel_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | cached
+[262/324] Running travel/travel_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+Tool get_current_grid_state call failed: tools.base.handler.BaseToolsHandler.get_current_grid_state() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: MealToolsHandler.get_meal_item_attributes() missing 1 required positional argument: 'field'
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_shopping_item_attributes call failed: ShoppingToolsHandler.get_shopping_item_attributes() missing 2 required positional arguments: 'ids' and 'field'
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_attributes call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_attributes() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_shopping_item_info call failed: tools.domain.shopping_tools.ShoppingToolsHandler.get_shopping_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_attributes call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_attributes() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_shopping_item_attributes call failed: ShoppingToolsHandler.get_shopping_item_attributes() missing 2 required positional arguments: 'ids' and 'field'
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_attributes call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_attributes() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: MealToolsHandler.get_meal_item_attributes() missing 2 required positional arguments: 'ids' and 'field'
+Tool get_shopping_item_info call failed: tools.domain.shopping_tools.ShoppingToolsHandler.get_shopping_item_info() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_meal_item_info call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_info() argument after ** must be a mapping, not list
+Tool get_meal_item_info call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_info() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Tool get_pc_build_item_info call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.get_pc_build_item_info() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_pc_build_candidate_from_attribute call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.query_pc_build_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool query_pc_build_candidate_from_attribute call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.query_pc_build_candidate_from_attribute() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Tool get_course_item_info call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_info() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool get_course_item_info call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_info() argument after ** must be a mapping, not list
+[59/324] Running meal/meal_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | status=succeed
+[263/324] Running travel/travel_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[263/324] Running travel/travel_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | cached
+[264/324] Running travel/travel_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[264/324] Running travel/travel_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | cached
+[265/324] Running travel/travel_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[265/324] Running travel/travel_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | cached
+[266/324] Running travel/travel_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[266/324] Running travel/travel_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | cached
+[267/324] Running travel/travel_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[267/324] Running travel/travel_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | cached
+[268/324] Running travel/travel_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[268/324] Running travel/travel_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | cached
+[269/324] Running travel/travel_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+Tool get_course_item_info call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_info() argument after ** must be a mapping, not list
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool get_course_item_info call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_info() argument after ** must be a mapping, not list
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Tool query_shopping_candidate_from_attribute call failed: tools.domain.shopping_tools.ShoppingToolsHandler.query_shopping_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool get_current_grid_state call failed: tools.base.handler.BaseToolsHandler.get_current_grid_state() argument after ** must be a mapping, not list
+Tool get_meal_item_attributes call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_attributes() argument after ** must be a mapping, not list
+Tool set_slot call failed: tools.base.handler.BaseToolsHandler.set_slot() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+[244/324] Running travel/travel_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | 
+status=succeed
+[270/324] Running travel/travel_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[270/324] Running travel/travel_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | cached
+[271/324] Running workforce/workforce_r5_c7_h1_b0 | fail=0.0 | trial=1/1
+[271/324] Running workforce/workforce_r5_c7_h1_b0 | fail=0.0 | trial=1/1 | 
+cached
+[272/324] Running workforce/workforce_r5_c7_h1_b2 | fail=0.0 | trial=1/1
+[272/324] Running workforce/workforce_r5_c7_h1_b2 | fail=0.0 | trial=1/1 | 
+cached
+[273/324] Running workforce/workforce_r5_c7_h1_b4 | fail=0.0 | trial=1/1
+Output was truncated due to token limit
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+[216/324] Running shopping/shopping_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | 
+status=succeed
+[274/324] Running workforce/workforce_r5_c7_h1_b8 | fail=0.0 | trial=1/1
+[274/324] Running workforce/workforce_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | 
+cached
+[275/324] Running workforce/workforce_r5_c7_h1_b10 | fail=0.0 | trial=1/1
+[275/324] Running workforce/workforce_r5_c7_h1_b10 | fail=0.0 | trial=1/1 | 
+cached
+[276/324] Running workforce/workforce_r5_c7_h1_b15 | fail=0.0 | trial=1/1
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Max steps reached for task: meal_r5_c7_h5_b8
+[67/324] Running meal/meal_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | status=error
+[277/324] Running workforce/workforce_r5_c7_h1_b19 | fail=0.0 | trial=1/1
+[277/324] Running workforce/workforce_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | 
+cached
+[278/324] Running workforce/workforce_r5_c7_h1_b21 | fail=0.0 | trial=1/1
+[278/324] Running workforce/workforce_r5_c7_h1_b21 | fail=0.0 | trial=1/1 | 
+cached
+[279/324] Running workforce/workforce_r5_c7_h1_b25 | fail=0.0 | trial=1/1
+[279/324] Running workforce/workforce_r5_c7_h1_b25 | fail=0.0 | trial=1/1 | 
+cached
+[280/324] Running workforce/workforce_r5_c7_h5_b0 | fail=0.0 | trial=1/1
+Tool get_shopping_item_info call failed: tools.domain.shopping_tools.ShoppingToolsHandler.get_shopping_item_info() argument after ** must be a mapping, not list
+Tool query_meal_candidate_from_attribute call failed: MealToolsHandler.query_meal_candidate_from_attribute() missing 5 required positional arguments: 'row', 'col', 'field', 'operator', and 'value'
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_pc_build_candidate_from_attribute call failed: tools.domain.pc_build_tools.PcBuildToolsHandler.query_pc_build_candidate_from_attribute() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Output was truncated due to token limit
+Tool get_workforce_item_attributes call failed: WorkforceToolsHandler.get_workforce_item_attributes() missing 1 required positional argument: 'field'
+Tool get_meal_item_info call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_info() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[58/324] Running meal/meal_r5_c7_h1_b8 | fail=0.0 | trial=1/1 | status=error
+[281/324] Running workforce/workforce_r5_c7_h5_b2 | fail=0.0 | trial=1/1
+[281/324] Running workforce/workforce_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | 
+cached
+[282/324] Running workforce/workforce_r5_c7_h5_b4 | fail=0.0 | trial=1/1
+[282/324] Running workforce/workforce_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | 
+cached
+[283/324] Running workforce/workforce_r5_c7_h5_b8 | fail=0.0 | trial=1/1
+[283/324] Running workforce/workforce_r5_c7_h5_b8 | fail=0.0 | trial=1/1 | 
+cached
+[284/324] Running workforce/workforce_r5_c7_h5_b10 | fail=0.0 | trial=1/1
+Tool query_meal_candidate_from_attribute call failed: MealToolsHandler.query_meal_candidate_from_attribute() missing 1 required positional argument: 'value'
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_travel_item_info call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_info() argument after ** must be a mapping, not list
+Tool query_travel_candidate_from_attribute call failed: tools.domain.travel_tools.TravelToolsHandler.query_travel_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool get_travel_item_info call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_info() argument after ** must be a mapping, not list
+Tool get_travel_item_info call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_info() argument after ** must be a mapping, not list
+Tool get_travel_item_info call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_info() argument after ** must be a mapping, not list
+Tool query_pc_build_candidate_from_attribute call failed: PcBuildToolsHandler.query_pc_build_candidate_from_attribute() missing 1 required positional argument: 'operator'
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[193/324] Running shopping/shopping_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | 
+status=error
+[285/324] Running workforce/workforce_r5_c7_h5_b15 | fail=0.0 | trial=1/1
+[285/324] Running workforce/workforce_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | 
+cached
+[286/324] Running workforce/workforce_r5_c7_h5_b19 | fail=0.0 | trial=1/1
+[286/324] Running workforce/workforce_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | 
+cached
+[287/324] Running workforce/workforce_r5_c7_h5_b21 | fail=0.0 | trial=1/1
+[287/324] Running workforce/workforce_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | 
+cached
+[288/324] Running workforce/workforce_r5_c7_h5_b25 | fail=0.0 | trial=1/1
+[288/324] Running workforce/workforce_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | 
+cached
+[289/324] Running workforce/workforce_r5_c7_h7_b0 | fail=0.0 | trial=1/1
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[140/324] Running pc_build/pc_build_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | 
+status=error
+[290/324] Running workforce/workforce_r5_c7_h7_b2 | fail=0.0 | trial=1/1
+[290/324] Running workforce/workforce_r5_c7_h7_b2 | fail=0.0 | trial=1/1 | 
+cached
+[291/324] Running workforce/workforce_r5_c7_h7_b4 | fail=0.0 | trial=1/1
+[291/324] Running workforce/workforce_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | 
+cached
+[292/324] Running workforce/workforce_r5_c7_h7_b8 | fail=0.0 | trial=1/1
+[292/324] Running workforce/workforce_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | 
+cached
+[293/324] Running workforce/workforce_r5_c7_h7_b10 | fail=0.0 | trial=1/1
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[154/324] Running pc_build/pc_build_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | 
+status=error
+[294/324] Running workforce/workforce_r5_c7_h7_b15 | fail=0.0 | trial=1/1
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[85/324] Running meal/meal_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | status=error
+[295/324] Running workforce/workforce_r5_c7_h7_b19 | fail=0.0 | trial=1/1
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[206/324] Running shopping/shopping_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | 
+status=error
+[296/324] Running workforce/workforce_r5_c7_h7_b21 | fail=0.0 | trial=1/1
+[296/324] Running workforce/workforce_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | 
+cached
+[297/324] Running workforce/workforce_r5_c7_h7_b25 | fail=0.0 | trial=1/1
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[248/324] Running travel/travel_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | 
+status=error
+[298/324] Running workforce/workforce_r5_c7_h11_b0 | fail=0.0 | trial=1/1
+[298/324] Running workforce/workforce_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | 
+cached
+[299/324] Running workforce/workforce_r5_c7_h11_b2 | fail=0.0 | trial=1/1
+[299/324] Running workforce/workforce_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | 
+cached
+[300/324] Running workforce/workforce_r5_c7_h11_b4 | fail=0.0 | trial=1/1
+[300/324] Running workforce/workforce_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | 
+cached
+[301/324] Running workforce/workforce_r5_c7_h11_b8 | fail=0.0 | trial=1/1
+[301/324] Running workforce/workforce_r5_c7_h11_b8 | fail=0.0 | trial=1/1 | 
+cached
+[302/324] Running workforce/workforce_r5_c7_h11_b10 | fail=0.0 | trial=1/1
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[119/324] Running pc_build/pc_build_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | 
+status=error
+[303/324] Running workforce/workforce_r5_c7_h11_b15 | fail=0.0 | trial=1/1
+[303/324] Running workforce/workforce_r5_c7_h11_b15 | fail=0.0 | trial=1/1 | 
+cached
+[304/324] Running workforce/workforce_r5_c7_h11_b19 | fail=0.0 | trial=1/1
+[304/324] Running workforce/workforce_r5_c7_h11_b19 | fail=0.0 | trial=1/1 | 
+cached
+[305/324] Running workforce/workforce_r5_c7_h11_b21 | fail=0.0 | trial=1/1
+[305/324] Running workforce/workforce_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | 
+cached
+[306/324] Running workforce/workforce_r5_c7_h11_b25 | fail=0.0 | trial=1/1
+[306/324] Running workforce/workforce_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | 
+cached
+[307/324] Running workforce/workforce_r5_c7_h15_b0 | fail=0.0 | trial=1/1
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[51/324] Running course/course_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | 
+status=error
+[308/324] Running workforce/workforce_r5_c7_h15_b2 | fail=0.0 | trial=1/1
+[308/324] Running workforce/workforce_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | 
+cached
+[309/324] Running workforce/workforce_r5_c7_h15_b4 | fail=0.0 | trial=1/1
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[82/324] Running meal/meal_r5_c7_h11_b0 | fail=0.0 | trial=1/1 | status=error
+[310/324] Running workforce/workforce_r5_c7_h15_b8 | fail=0.0 | trial=1/1
+[310/324] Running workforce/workforce_r5_c7_h15_b8 | fail=0.0 | trial=1/1 | 
+cached
+[311/324] Running workforce/workforce_r5_c7_h15_b10 | fail=0.0 | trial=1/1
+[311/324] Running workforce/workforce_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | 
+cached
+[312/324] Running workforce/workforce_r5_c7_h15_b15 | fail=0.0 | trial=1/1
+[312/324] Running workforce/workforce_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | 
+cached
+[313/324] Running workforce/workforce_r5_c7_h15_b19 | fail=0.0 | trial=1/1
+[313/324] Running workforce/workforce_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | 
+cached
+[314/324] Running workforce/workforce_r5_c7_h15_b21 | fail=0.0 | trial=1/1
+[314/324] Running workforce/workforce_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | 
+cached
+[315/324] Running workforce/workforce_r5_c7_h15_b25 | fail=0.0 | trial=1/1
+[315/324] Running workforce/workforce_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | 
+cached
+[316/324] Running workforce/workforce_r5_c7_h21_b0 | fail=0.0 | trial=1/1
+[316/324] Running workforce/workforce_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | 
+cached
+[317/324] Running workforce/workforce_r5_c7_h21_b2 | fail=0.0 | trial=1/1
+[317/324] Running workforce/workforce_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | 
+cached
+[318/324] Running workforce/workforce_r5_c7_h21_b4 | fail=0.0 | trial=1/1
+[318/324] Running workforce/workforce_r5_c7_h21_b4 | fail=0.0 | trial=1/1 | 
+cached
+[319/324] Running workforce/workforce_r5_c7_h21_b8 | fail=0.0 | trial=1/1
+[319/324] Running workforce/workforce_r5_c7_h21_b8 | fail=0.0 | trial=1/1 | 
+cached
+[320/324] Running workforce/workforce_r5_c7_h21_b10 | fail=0.0 | trial=1/1
+[320/324] Running workforce/workforce_r5_c7_h21_b10 | fail=0.0 | trial=1/1 | 
+cached
+[321/324] Running workforce/workforce_r5_c7_h21_b15 | fail=0.0 | trial=1/1
+[321/324] Running workforce/workforce_r5_c7_h21_b15 | fail=0.0 | trial=1/1 | 
+cached
+[322/324] Running workforce/workforce_r5_c7_h21_b19 | fail=0.0 | trial=1/1
+[322/324] Running workforce/workforce_r5_c7_h21_b19 | fail=0.0 | trial=1/1 | 
+cached
+[323/324] Running workforce/workforce_r5_c7_h21_b21 | fail=0.0 | trial=1/1
+[323/324] Running workforce/workforce_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | 
+cached
+[324/324] Running workforce/workforce_r5_c7_h21_b25 | fail=0.0 | trial=1/1
+[324/324] Running workforce/workforce_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | 
+cached
+[186/324] Running shopping/shopping_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | 
+status=succeed
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[162/324] Running pc_build/pc_build_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[197/324] Running shopping/shopping_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[155/324] Running pc_build/pc_build_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | 
+status=error
+Tool get_travel_item_attributes call failed: tools.domain.travel_tools.TravelToolsHandler.get_travel_item_attributes() argument after ** must be a mapping, not list
+Tool get_current_grid_state call failed: tools.base.handler.BaseToolsHandler.get_current_grid_state() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Max steps reached for task: travel_r5_c7_h15_b15
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[258/324] Running travel/travel_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | 
+status=error
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+Tool get_workforce_item_attributes call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_attributes() argument after ** must be a mapping, not list
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[174/324] Running shopping/shopping_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | 
+status=succeed
+Tool get_workforce_item_info call failed: tools.domain.workforce_tools.WorkforceToolsHandler.get_workforce_item_info() argument after ** must be a mapping, not list
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[273/324] Running workforce/workforce_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | 
+status=succeed
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[57/324] Running meal/meal_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | status=succeed
+Tool get_meal_item_info call failed: tools.domain.meal_tools.MealToolsHandler.get_meal_item_info() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[131/324] Running pc_build/pc_build_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[226/324] Running travel/travel_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[209/324] Running shopping/shopping_r5_c7_h21_b2 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_meal_candidate_from_attribute call failed: MealToolsHandler.query_meal_candidate_from_attribute() missing 1 required positional argument: 'value'
+[205/324] Running shopping/shopping_r5_c7_h15_b19 | fail=0.0 | trial=1/1 | 
+status=succeed
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_meal_candidate_from_attribute call failed: MealToolsHandler.query_meal_candidate_from_attribute() missing 1 required positional argument: 'value'
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_workforce_candidate_from_attribute call failed: WorkforceToolsHandler.query_workforce_candidate_from_attribute() missing 1 required positional argument: 'value'
+Tool query_meal_candidate_from_attribute call failed: MealToolsHandler.query_meal_candidate_from_attribute() missing 1 required positional argument: 'value'
+Max steps reached for task: meal_r5_c7_h15_b15
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[96/324] Running meal/meal_r5_c7_h15_b15 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[72/324] Running meal/meal_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[76/324] Running meal/meal_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[254/324] Running travel/travel_r5_c7_h15_b2 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[83/324] Running meal/meal_r5_c7_h11_b2 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[84/324] Running meal/meal_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[180/324] Running shopping/shopping_r5_c7_h5_b25 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[17/324] Running course/course_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[302/324] Running workforce/workforce_r5_c7_h11_b10 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[66/324] Running meal/meal_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[133/324] Running pc_build/pc_build_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | 
+status=error
+Tool query_meal_candidate_from_attribute call failed: tools.domain.meal_tools.MealToolsHandler.query_meal_candidate_from_attribute() argument after ** must be a mapping, not list
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[89/324] Running meal/meal_r5_c7_h11_b21 | fail=0.0 | trial=1/1 | status=succeed
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[115/324] Running pc_build/pc_build_r5_c7_h1_b19 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[198/324] Running shopping/shopping_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[261/324] Running travel/travel_r5_c7_h15_b25 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Max steps reached for task: meal_r5_c7_h7_b15
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[78/324] Running meal/meal_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | status=error
+Output was truncated due to token limit
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[27/324] Running course/course_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[284/324] Running workforce/workforce_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[294/324] Running workforce/workforce_r5_c7_h7_b15 | fail=0.0 | trial=1/1 | 
+status=error
+Max steps reached for task: meal_r5_c7_h5_b2
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[65/324] Running meal/meal_r5_c7_h5_b2 | fail=0.0 | trial=1/1 | status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Max steps reached for task: meal_r5_c7_h15_b21
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[98/324] Running meal/meal_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | status=error
+Output was truncated due to token limit
+Tool get_course_item_attributes call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_attributes() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[68/324] Running meal/meal_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[188/324] Running shopping/shopping_r5_c7_h7_b21 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[295/324] Running workforce/workforce_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[309/324] Running workforce/workforce_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | 
+status=error
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[184/324] Running shopping/shopping_r5_c7_h7_b8 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[280/324] Running workforce/workforce_r5_c7_h5_b0 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.
+Generate failed: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[54/324] Running course/course_r5_c7_h21_b25 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.
+Generate failed: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[14/324] Running course/course_r5_c7_h5_b10 | fail=0.0 | trial=1/1 | 
+status=error
+Tool get_course_item_attributes call failed: tools.domain.course_tools.CourseToolsHandler.get_course_item_attributes() argument after ** must be a mapping, not list
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[135/324] Running pc_build/pc_build_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[257/324] Running travel/travel_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[289/324] Running workforce/workforce_r5_c7_h7_b0 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[293/324] Running workforce/workforce_r5_c7_h7_b10 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[111/324] Running pc_build/pc_build_r5_c7_h1_b4 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[276/324] Running workforce/workforce_r5_c7_h1_b15 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+Generate failed: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out.
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[70/324] Running meal/meal_r5_c7_h5_b19 | fail=0.0 | trial=1/1 | status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Tool query_shopping_candidate_from_attribute call failed: ShoppingToolsHandler.query_shopping_candidate_from_attribute() missing 1 required positional argument: 'value'
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[144/324] Running pc_build/pc_build_r5_c7_h11_b25 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Max steps reached for task: course_r5_c7_h11_b4
+[30/324] Running course/course_r5_c7_h11_b4 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[12/324] Running course/course_r5_c7_h5_b4 | fail=0.0 | trial=1/1 | status=error
+Max steps reached for task: travel_r5_c7_h21_b21
+[269/324] Running travel/travel_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[177/324] Running shopping/shopping_r5_c7_h5_b15 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[307/324] Running workforce/workforce_r5_c7_h15_b0 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+Generate failed: litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[71/324] Running meal/meal_r5_c7_h5_b21 | fail=0.0 | trial=1/1 | status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[44/324] Running course/course_r5_c7_h15_b21 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[53/324] Running course/course_r5_c7_h21_b21 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+Generate failed: litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[262/324] Running travel/travel_r5_c7_h21_b0 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+[147/324] Running pc_build/pc_build_r5_c7_h15_b4 | fail=0.0 | trial=1/1 | 
+status=error
+Output was truncated due to token limit
+Output was truncated due to token limit
+Output was truncated due to token limit
+Task failed: output truncated due to max_tokens limit 3 times
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[297/324] Running workforce/workforce_r5_c7_h7_b25 | fail=0.0 | trial=1/1 | 
+status=error
+litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+Generate failed: litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[95/324] Running meal/meal_r5_c7_h15_b10 | fail=0.0 | trial=1/1 | status=error
+litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+Generate failed: litellm.BadRequestError: OpenAIException - You passed 245761 input tokens and requested 16384 output tokens. However, the model's context length is only 262144 tokens, resulting in a maximum input length of 245760 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=245761)
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+[21/324] Running course/course_r5_c7_h7_b4 | fail=0.0 | trial=1/1 | status=error
+Max steps reached for task: course_r5_c7_h7_b19
+[25/324] Running course/course_r5_c7_h7_b19 | fail=0.0 | trial=1/1 | 
+status=error
+  Benchmark tasks completed ━━━━━━━━━━━━━━━━━━━━━━━ 100% 324/324 7:38:50 0:00:00
+╭─────────────────────────── Benchmark Run Finished ───────────────────────────╮
+│ Model: openai/miromind-ai/MiroThinker-1.7-mini                               │
+│ Domains: a, l, l                                                             │
+│ Dataset Objects: 324                                                         │
+│ Total Runs: 324                                                              │
+│ Average Score: 0.1019                                                        │
+│ Avg Prompt Tokens: 18426805.31                                               │
+│ Avg Completion Tokens: 114092.05                                             │
+│ Avg Total Tokens: 18540897.36                                                │
+│ Avg Tool Calls: 31.51                                                        │
+│ Avg Steps: 234.54                                                            │
+│ Avg Time (s): 22135.77                                                       │
+│ Avg Cost: 0.000000                                                           │
+│ Max Query IDs: 5                                                             │
+│ Max Query Fields: 5                                                          │
+│ Overwrite Results: False                                                     │
+│ Cached Runs: 247                                                             │
+│ Hidden Slots Filter: -                                                       │
+│ Branch Budget Filter: -                                                      │
+│ Check Include Reason: False                                                  │
+│ Global Check Alpha: -1                                                       │
+│ Extra Query Num: -1                                                          │
+│ Save Path: /scratch/pioneer/jobs/wxy320/save/cached_results/                 │
+│ Status: Completed                                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯

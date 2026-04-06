@@ -40,7 +40,7 @@ def parse_list_arg(value, item_type):
 
 
 def set_seed(seed: int) -> None:
-    """设置随机种子，保证可复现性。"""
+    """Set random seed for reproducibility."""
     random.seed(seed)
 
 
@@ -67,7 +67,7 @@ def main(
     max_length_truncations=3,
 ):
     """
-    组装 dataset、agent、cache env，并执行完整流程。
+    Assemble dataset, agent, and cache env, then run the full benchmark.
     """
     set_seed(seed)
     data_dir = data_dir or DEFAULT_DATA_DIR
@@ -314,105 +314,105 @@ def main(
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="模型名称")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="Model name")
     parser.add_argument(
         "--agent-params",
         default=DEFAULT_AGENT_PARAMS,
-        help="Agent 额外参数, JSON 字符串",
+        help="Extra agent parameters as a JSON string",
     )
     parser.add_argument(
         "--data-dir",
         default=DEFAULT_DATA_DIR,
-        help="数据集文件夹路径",
+        help="Path to the dataset directory",
     )
     parser.add_argument(
         "--domain",
         nargs="+",
         choices=DOMAIN_CHOICES + ["all"],
         default=DEFAULT_DOMAIN,
-        help=f"领域列表，可多选: {', '.join(DOMAIN_CHOICES)}，或 all 表示全部领域",
+        help=f"One or more domains to evaluate: {', '.join(DOMAIN_CHOICES)}, or 'all'",
     )
     parser.add_argument(
         "--max-steps",
         type=int,
         default=DEFAULT_MAX_STEPS,
-        help="单个 task 最大步数",
+        help="Maximum number of steps per task",
     )
     parser.add_argument(
         "--tool-failure-rates",
         default=DEFAULT_TOOL_FAILURE_RATES,
-        help="tool 调用失败率列表，支持 JSON 或逗号分隔，如 [0,0.1,0.5]",
+        help="List of tool failure rates, as JSON or comma-separated, e.g. [0,0.1,0.5]",
     )
     parser.add_argument(
         "--num-trials",
         dest="num_trials",
         type=int,
         default=DEFAULT_NUM_TRIALS,
-        help="每个 task 的重复运行次数",
+        help="Number of repeated trials per task",
     )
     parser.add_argument(
         "--tools-all-domains",
         dest="tools_domain_only",
         action="store_false",
         default=DEFAULT_TOOLS_DOMAIN_ONLY,
-        help="tool 展示全部 domain；不指定时仅展示当前 domain",
+        help="Expose tools for all domains; by default only the current domain's tools are shown",
     )
     parser.add_argument(
         "--save-path",
         default=DEFAULT_SAVE_PATH,
-        help="结果 JSON 输出路径",
+        help="Output path for results",
     )
     parser.add_argument(
         "--overwrite-results",
         action="store_true",
         default=DEFAULT_OVERWRITE_RESULTS,
-        help="若指定，则覆盖已存在的结果文件；否则会优先复用已有结果",
+        help="If set, overwrite existing result files; otherwise reuse cached results",
     )
     parser.add_argument(
         "--seed",
         type=int,
         default=DEFAULT_SEED,
-        help="随机种子",
+        help="Random seed",
     )
     parser.add_argument(
         "--max-query-ids",
         type=int,
         default=DEFAULT_MAX_QUERY_IDS,
-        help="多 item 属性查询工具一次最多允许查询的 item id 数量",
+        help="Maximum number of item IDs per multi-attribute query",
     )
     parser.add_argument(
         "--max-query-fields",
         type=int,
         default=DEFAULT_MAX_QUERY_FIELDS,
-        help="多 item 属性查询工具一次最多允许查询的属性数量",
+        help="Maximum number of fields per multi-attribute query",
     )
     parser.add_argument(
         "--hidden-slots",
         type=int,
         nargs="*",
         default=None,
-        help="仅测试 hidden_slots 在该列表内的数据集；不传则不过滤",
+        help="Only run instances whose hidden_slots count is in this list; no filter if omitted",
     )
     parser.add_argument(
         "--branch-budget",
         type=int,
         nargs="*",
         default=None,
-        help="仅测试 branch_budget 在该列表内的数据集；不传则不过滤",
+        help="Only run instances whose branch_budget is in this list; no filter if omitted",
     )
     parser.add_argument(
         "--check-include-reason",
         action="store_true",
         default=False,
-        help="若指定，则 check slot/global 返回 is_valid 之外也返回 reason；默认不返回 reason",
+        help="If set, constraint check tools return a violation reason in addition to is_valid",
     )
     parser.add_argument(
         "--global-check-alpha",
         type=float,
         default=-1,
         help=(
-            "限制 global constraints 调用次数，budget = floor(alpha * hidden_slots)；默认 -1。"
-            "传 -1 表示不限制调用次数；传 None（不传此参数）等同于不限制。"
+            "Limits global constraint check calls to floor(alpha * hidden_slots); default -1 (unlimited). "
+            "0 = disallow all global checks, 0.5 = strict, 1 = ~one call per hidden slot, 2 = relaxed."
         ),
     )
     parser.add_argument(
@@ -421,8 +421,8 @@ def parse_args():
         type=int,
         default=DEFAULT_EXTRA_QUERY_NUM,
         help=(
-            "每个 hidden slot 的 attribute query 次数在 (slot_constraints + hidden_slots) 基础上额外增加的数量；默认 -1。"
-            "传 -1 表示该 slot 的 attribute query 次数不限制。"
+            "Extra attribute query budget per hidden slot on top of (slot_constraints + hidden_slots); "
+            "default -1 (unlimited)."
         ),
     )
     parser.add_argument(
@@ -430,7 +430,7 @@ def parse_args():
         dest="max_workers",
         type=int,
         default=DEFAULT_MAX_WORKERS,
-        help="并行运行的最大 task 数量；默认 25",
+        help="Maximum number of tasks to run in parallel; default 25",
     )
     parser.add_argument(
         "--max-length-truncations",
@@ -438,7 +438,8 @@ def parse_args():
         type=int,
         default=3,
         help=(
-            "单次任务中，因输出超过 max_tokens 被截断的最大允许次数；超过后任务标记为 error 并终止。默认 3。"
+            "Maximum number of times a task's output may be truncated due to exceeding max_tokens "
+            "before the task is marked as error and terminated; default 3."
         ),
     )
     return parser.parse_args()

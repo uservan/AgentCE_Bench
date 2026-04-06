@@ -1,6 +1,6 @@
 # Data Generation
 
-## Commands
+## 1. Commands
 
 ### Single Domain
 
@@ -22,7 +22,7 @@ Key parameters:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--domain` | required | Domain name (e.g. `course`), or `--all-domains` for all |
+| `--domain` | required | Domain name, or `--all-domains` for all. Available: `course` (course scheduling), `meal` (meal planning), `pc_build` (PC configuration), `shopping` (shopping list), `travel` (travel itinerary), `workforce` (staff scheduling) |
 | `--rows` / `--cols` | required | Grid dimensions |
 | `--hidden-slots` | required | List of hidden slot counts to generate |
 | `--branch-budget` | required | List of branch budgets to generate |
@@ -57,7 +57,7 @@ python data_generation/generate.py \
 
 ---
 
-## Generation Process
+## 2. Generation Process
 
 Generation proceeds in two phases: first fix the truth solution and constraints, then generate candidates for each hidden slot.
 
@@ -110,12 +110,17 @@ When future hidden slots are `None`, only constraints that become *harder to sat
 
 ---
 
-## Output Format
+## 3. Output Format
 
 ```json
 {
   "domain": "course",
   "num_instances": 2,
+  "rows": 5,
+  "cols": 5,
+  "hidden_slots": [1, 3],
+  "branch_budget": [0, 2, 4, 6, 8],
+  "candidates_per_slot": 15,
   "instances": [
     {
       "instance_id": "course_r5_c5_h1_b0",
@@ -151,8 +156,18 @@ When future hidden slots are `None`, only constraints that become *harder to sat
 }
 ```
 
+Top-level fields:
+- `num_instances`: total number of instances in this file
+- `instances`: can contain multiple instances with different hidden/budget configurations from the same domain; each instance's `meta` records its own `rows`, `cols`, `hidden_slots`, `branch_budget`, `branch_slot_count`, `branch_budget_allocations`, and actual `candidates_per_slot`
+
+Per-instance fields:
+- `global_constraints`: conditions the entire table must satisfy
 - `item_pool`: `item_id → item_info` dict
 - `truth_solution`: complete correct grid
 - `partial_solution`: grid with hidden slots set to `null` (input to agent)
-- `slots`: only hidden slots, each with its constraints and candidates
-- Auto-validation runs after generation; if any instance fails truth/constraint/decoy checks, it is resampled up to `max_retries` times before raising an exception.
+- `hidden_slots`: records which positions are hidden
+- `slots`: only hidden slots, each with `slot_constraints`, `candidate_ids`, `decoy_ids`, `filter_candidate_ids`
+- `decoy_ids`: candidates that satisfy local slot constraints but are designed to trigger global constraint violations
+- `filter_candidate_ids`: candidates that directly violate local slot constraints (obviously wrong distractors)
+
+Auto-validation runs after generation; if any instance fails truth/constraint/decoy checks, it is resampled up to `max_retries` times before raising an exception.

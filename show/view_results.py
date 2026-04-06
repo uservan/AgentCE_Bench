@@ -1,6 +1,7 @@
 """Interactive logic for viewing eval results."""
 import math
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -247,13 +248,27 @@ def compare_model_results(base_path: str) -> None:
         f"\n[bold]Loading model results[/bold] [dim]({base_path})[/dim]"
     )
 
-    summaries = []
     total_models = len(models)
-    for index, model in enumerate(models, 1):
-        summary = _build_model_average_summary(base_path, model)
-        _print_model_loading_status(index, total_models, model, summary)
-        if summary is not None:
-            summaries.append(summary)
+    results_map: dict[str, dict[str, Any] | None] = {}
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_model = {
+            executor.submit(_build_model_average_summary, base_path, model): model
+            for model in models
+        }
+        completed = 0
+        for future in as_completed(future_to_model):
+            model = future_to_model[future]
+            summary = future.result()
+            results_map[model] = summary
+            completed += 1
+            _print_model_loading_status(completed, total_models, model, summary)
+
+    summaries = [
+        results_map[model]
+        for model in models
+        if results_map.get(model) is not None
+    ]
 
     if not summaries:
         ConsoleDisplay.console.print("[red]No matching JSON files found for any model.[/red]")
