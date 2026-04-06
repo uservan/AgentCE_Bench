@@ -1,20 +1,7 @@
-<h1>
-  <svg xmlns="http://www.w3.org/2000/svg" width="700" height="80" viewBox="0 0 700 80">
-    <text y="35" font-family="serif" font-size="28" font-weight="bold">
-      <tspan fill="#cc0000">ACE</tspan>
-      <tspan fill="#000000">-Bench: </tspan>
-      <tspan fill="#cc0000">A</tspan>
-      <tspan fill="#000000">gent </tspan>
-      <tspan fill="#cc0000">C</tspan>
-      <tspan fill="#000000">onfigurable </tspan>
-      <tspan fill="#cc0000">E</tspan>
-      <tspan fill="#000000">valuation</tspan>
-    </text>
-    <text x="0" y="65" font-family="serif" font-size="28" font-weight="bold" fill="#000000">
-      with Scalable Horizons and Controllable Difficulty under Lightweight Environments
-    </text>
-  </svg>
-</h1>
+
+# ACE-Bench
+ 
+**A**gent **C**onfigurable **E**valuation with Scalable Horizons and Controllable Difficulty under Lightweight Environments
 
 ## Generating Datasets
 ![Generation Overview](pics/agent2.png)
