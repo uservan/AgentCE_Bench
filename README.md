@@ -48,7 +48,8 @@ For detailed usage and parameter descriptions, see [debug_vllm/README.md](debug_
 
 ## Analyzing Results
 
-![Results Overview](pics/agent1.png)
+![Results Overview](pics/agent3.png)
+![All Results Overview](pics/agent1.png)
 
 Run the interactive result viewer:
 
