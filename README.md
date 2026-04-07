@@ -40,10 +40,6 @@ python data_generation/generate.py \
 
 For detailed parameter descriptions and generation logic, see [data_generation/README.md](data_generation/README.md).
 
-
-
-python data_generation/generate.py --domain course  --rows 5 --cols 10 --hidden-slots 1 3 5 7 11 15 19 21 25 --branch-budget 0 2 4 8 10 15 19 21 25 30 --candidates-per-slot 35 --max-retries 400 --candidate-resample-retries 30 --open-valid-preference-tries 50 100 150 --seed 42 --max-workers 36
-
 ---
 
 ## Running the Benchmark
