@@ -95,7 +95,7 @@ main(
 )
 ```
 
-### Example: Running Specific Hidden Slots and Branch Budgets
+### (Optional) Example: Running Specific Hidden Slots and Branch Budgets
 
 To run evaluation only on instances with specific hidden slots (e.g., 1 and 3) and branch budgets (e.g., 0 and 2), modify the `hidden_slots` and `branch_budget` parameters:
 
