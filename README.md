@@ -11,25 +11,6 @@ pip install -r requirements.txt
 
 ---
 
-## Project Structure
-
-```
-.
-├── env/                    # Core benchmark environment
-│   ├── agent/              # Agent loop and task abstraction
-│   ├── load_datasets/      # Dataset loading utilities
-│   └── tools/              # Tool schemas and invocation handlers
-├── data/                   # Pre-generated datasets
-├── data_generation/        # Dataset generation scripts
-├── debug_vllm/             # vLLM evaluation entry point
-├── utils/                  # Display and helper utilities
-├── draw.ipynb              # Heatmap visualization notebook
-├── show.py                 # Interactive result viewer
-└── main.py                 # Benchmark runner
-```
-
----
-
 ## Generating Datasets
 Pre-generated datasets for three grid sizes are already available under `data/` and can be used directly:
 
