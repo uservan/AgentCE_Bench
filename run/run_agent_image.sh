@@ -32,7 +32,7 @@ nohup singularity exec --cleanenv --nv \
   --bind $HOME:$HOME \
   --bind /scratch:/scratch \
   --bind /tmp:/tmp \
-  /scratch/pioneer/jobs/wxy320/save/images/vllm_0.17.1.sif \
+  /scratch/pioneer/jobs/user/save/images/vllm_0.17.1.sif \
   bash "$AGENT_SCRIPT" \
   > run/vllm_server.log 2>&1 &
 
