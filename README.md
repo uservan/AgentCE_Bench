@@ -41,14 +41,41 @@ For detailed parameter descriptions and generation logic, see [data_generation/R
 
 ## Running the Benchmark
 
-The evaluation entry point is `debug_vllm/debug.py`. Example:
+This project uses [LiteLLM](https://github.com/BerriAI/litellm) to access models via a unified API interface. For locally-hosted models, you need to start the corresponding inference service (e.g. vLLM) before running the benchmark.
 
+run the benchmark directly via `main.py`. Example (Qwen3.5-122B-A10B, all domains):
 ```bash
-nohup python debug_vllm/debug.py > debug_vllm/debug_log/qwen35_9b.log 2>&1 &
-disown
+python main.py \
+  --model "openai/Qwen/Qwen3.5-122B-A10B" \
+  --agent-params '{"api_base":"http://localhost:8011/v1","temperature":1.0,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":1.5,"repetition_penalty":1.0,"max_tokens":16384,"timeout":1800,"num_retries":1}' \
+  --domain all \
+  --data-dir data/5x7 \
+  --max-steps 2000 \
+  --tool-failure-rates "[0.0]" \
+  --save-path cached_results/ \
+  --max-workers 64 \
+  --num-trials 1 \
+  --seed 42
 ```
 
-For detailed usage and parameter descriptions, see [debug_vllm/README.md](debug_vllm/README.md).
+Example (Qwen3.5-122B-A10B, `course` domain, specific hidden slots and branch budgets):
+```bash
+python main.py \
+  --model "openai/Qwen/Qwen3.5-122B-A10B" \
+  --agent-params '{"api_base":"http://localhost:8011/v1","temperature":1.0,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":1.5,"repetition_penalty":1.0,"max_tokens":16384,"timeout":1800,"num_retries":1}' \
+  --domain course \
+  --data-dir data/5x7 \
+  --max-steps 2000 \
+  --tool-failure-rates "[0.0]" \
+  --save-path cached_results/ \
+  --max-workers 64 \
+  --num-trials 1 \
+  --hidden-slots 5 11 15 \
+  --branch-budget 0 4 8 \
+  --seed 42
+```
+
+For running with a locally-hosted vLLM server (launching the server, configuring model endpoints, and full command-line parameter descriptions), see [debug_vllm/README.md](debug_vllm/README.md).
 
 ---
 

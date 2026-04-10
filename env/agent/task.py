@@ -11,7 +11,7 @@ except ImportError:
 
 
 DEFAULT_MAX_QUERY_IDS = 5
-DEFAULT_MAX_QUERY_FIELDS = 6
+DEFAULT_MAX_QUERY_FIELDS = 5
 
 
 def _build_hidden_slot_path(dataset_object: SavedDatasetObject) -> list[tuple[int, int]]:
