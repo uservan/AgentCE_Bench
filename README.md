@@ -43,7 +43,7 @@ For detailed parameter descriptions and generation logic, see [data_generation/R
 
 This project uses [LiteLLM](https://github.com/BerriAI/litellm) to access models via a unified API interface. For locally-hosted models, you need to start the corresponding inference service (e.g. vLLM) before running the benchmark.
 
-run the benchmark directly via `main.py`. Example (Qwen3.5-122B-A10B, all domains):
+Example (Qwen3.5-122B-A10B, all domains):
 ```bash
 python main.py \
   --model "openai/Qwen/Qwen3.5-122B-A10B" \
@@ -51,14 +51,13 @@ python main.py \
   --domain all \
   --data-dir data/5x7 \
   --max-steps 2000 \
-  --tool-failure-rates "[0.0]" \
   --save-path cached_results/ \
   --max-workers 64 \
   --num-trials 1 \
   --seed 42
 ```
 
-Example (Qwen3.5-122B-A10B, `course` domain, specific hidden slots and branch budgets):
+Example (Qwen3.5-122B-A10B, `course` domain, specific hidden slots and branch budgets, different tool failure rates):
 ```bash
 python main.py \
   --model "openai/Qwen/Qwen3.5-122B-A10B" \
@@ -66,7 +65,7 @@ python main.py \
   --domain course \
   --data-dir data/5x7 \
   --max-steps 2000 \
-  --tool-failure-rates "[0.0]" \
+  --tool-failure-rates "[0.0, 0.1]" \
   --save-path cached_results/ \
   --max-workers 64 \
   --num-trials 1 \
