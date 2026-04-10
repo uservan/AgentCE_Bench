@@ -171,3 +171,20 @@ Per-instance fields:
 - `filter_candidate_ids`: candidates that directly violate local slot constraints (obviously wrong distractors)
 
 Auto-validation runs after generation; if any instance fails truth/constraint/decoy checks, it is resampled up to `max_retries` times before raising an exception.
+
+---
+## 4. Interactive show
+Run the interactive result viewer:
+
+```bash
+python data_generation/show.py
+```
+
+Four options are available:
+
+| Option | Description |
+|--------|-------------|
+| **1. Validate dataset** | Validate a generated dataset file, checking that truth solutions, slot constraints, and decoy multi-stage guarantees are all satisfied |
+| **2. View model metric results** | Enter a model result directory (e.g. `results/5x7/.../GLM-4.7-FP8`) and view average score/token/cost metrics across hidden slot and branch budget (decoy) combinations |
+| **3. Compare model metric results** | Load all models under a result directory in parallel and display a ranked comparison across metrics (score, cost, time, etc.), broken down by branch budget (decoy) |
+| **4. View model messages** | Enter a single result JSON file path and display the full conversation between the agent and the environment in a two-column layout (assistant on the right, others on the left) |
