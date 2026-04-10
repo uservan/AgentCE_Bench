@@ -1,5 +1,7 @@
 # Data Generation
 
+![Data](../pics/data.png)
+
 ## 1. Commands
 
 ### Single Domain
