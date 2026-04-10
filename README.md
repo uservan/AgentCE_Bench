@@ -74,7 +74,7 @@ python main.py \
   --seed 42
 ```
 
-For running with a locally-hosted vLLM server (launching the server, configuring model endpoints, and full command-line parameter descriptions), see [run/README.md](debug_vllm/README.md).
+For running with a locally-hosted vLLM server (launching the server, configuring model endpoints, and full command-line parameter descriptions), see [run/README.md](run/README.md).
 
 ---
 
