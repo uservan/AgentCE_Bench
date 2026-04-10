@@ -189,7 +189,7 @@ MODELS = {
             "min_p": 0.0,
             "presence_penalty": 1.5,
             "repetition_penalty": 1.0,
-            "max_tokens": 16*1024,
+            "max_tokens": 16*1024,  # max output tokens per response
             "timeout": 60*30,
             "num_retries": 1,
         },
